@@ -1,0 +1,739 @@
+{
+  "scenario_id": "LN2-v01",
+  "scenario_name": "上线前夜 · 星盘结算",
+  "version": "0.1",
+  "description": "支付链路 SaaS 产品「星盘结算」计划明日 09:00 上线，配合已签约的市场推广活动。新引擎核心支付接口存在已知缺陷，QA 在 staging 环境复现确认触发阈值为 QPS>2500。预估活动峰值 3200 笔/秒。学生需要在 D1（中间决策：资源投向）和 D2（最终决策：上线方案）两个节点完成信息收集、方案比较并提交决策。",
+
+  "timeline": {
+    "start": "今日 17:00",
+    "d1_deadline": "今晚 21:30",
+    "d2_deadline": "明早 09:00 前",
+    "simulated_window_hours": 16,
+    "real_time_budget_minutes": 40
+  },
+
+  "decision_nodes": {
+    "D1": {
+      "name": "中间决策：资源投向",
+      "deadline": "今晚 21:30",
+      "options": ["A_连夜修复", "B_灰度准备", "C_继续回归"],
+      "impact_on_D2": {
+        "A_连夜修复": {
+          "auto_disclose": ["F-11", "F-06"],
+          "d2_options": ["delay系列"],
+          "state_writes": { "S1": "修复路径锁定" },
+          "time_cost": "全部16h窗口",
+          "teaching_intent": "亲历修复后发现来不及的路径依赖；理解机会成本"
+        },
+        "B_灰度准备": {
+          "auto_disclose": ["F-04", "F-12"],
+          "d2_options": ["Go", "Delay", "Limited_5%", "Limited_20%", "Limited_50%"],
+          "state_writes": { "S2": "可被更准确评估" },
+          "time_cost": "8人时（研发4+QA4）",
+          "teaching_intent": "信息增量最大路径；展示准备本身就是信息获取"
+        },
+        "C_继续回归": {
+          "auto_disclose": [],
+          "d2_options": ["Go", "Delay", "Limited_5%", "Limited_20%", "Limited_50%"],
+          "state_writes": { "S1": "无变化" },
+          "time_cost": "12人时",
+          "teaching_intent": "信息获取机会成本的直接体验：花了资源但没买到信息"
+        }
+      }
+    },
+    "D2": {
+      "name": "最终决策：上线方案",
+      "deadline": "明早 09:00 前",
+      "options": ["Go全量", "Delay_24h", "Limited_5%", "Limited_20%", "Limited_50%"],
+      "contingency_options": ["活动页切老引擎", "监控哨兵+客服预案", "48h后放量计划"],
+      "submission_requirements": ["方案选择", "决策依据（引用事实）", "关键干系人沟通方案"]
+    }
+  },
+
+  "roles": [
+    {
+      "id": "R1",
+      "name": "沈屹",
+      "title": "技术负责人",
+      "core_concern": "技术风险和系统稳定性",
+      "initial_trust": 50,
+      "stance": "风险优先，主张修复或灰度发布",
+      "personality": "沉静、系统思维强，习惯用数字说话但不会主动展开全部细节",
+      "surface_stance": "先把缺陷修了再说",
+      "deep_interest": "上线后翻车，技术债是自己背",
+      "moveable_zone": "学生用 F-04 阈值对上 F-05 峰值，指出全量必触发时，他会承认数据比对比'感觉安全'更有说服力，转而支持灰度",
+      "bottom_line": "不修就上他不同意Go全量，但灰度+预案可以接受",
+      "indispensable_facts": ["F-06", "F-10", "F-11", "F-12"],
+      "weak_signal_facts": ["F-06", "F-12"]
+    },
+    {
+      "id": "R2",
+      "name": "闻笛",
+      "title": "QA负责人",
+      "core_concern": "产品质量和上线风险",
+      "initial_trust": 50,
+      "stance": "质量底线，认为必须修复P1缺陷才能上线",
+      "personality": "细致、注重细节，对质量风险有强烈敏感性，会主动强调测试覆盖不足",
+      "surface_stance": "P1 必须修复，否则不签",
+      "deep_interest": "出了事故QA第一个被追责",
+      "moveable_zone": "学生用 F-05 对 F-04、指出灰度比例可控时，她会从'必须修'转向'灰度比例必须≤安全线'",
+      "bottom_line": "不修P1可以，但灰度比例必须有数据支撑",
+      "indispensable_facts": ["F-04", "F-07", "F-15", "F-16"],
+      "weak_signal_facts": ["F-07", "F-15"]
+    },
+    {
+      "id": "R3",
+      "name": "江照",
+      "title": "运营负责人",
+      "core_concern": "按时上线和用户满意度",
+      "initial_trust": 50,
+      "stance": "商业优先，主张按时上线以减少损失",
+      "personality": "务实、商业导向，关注用户影响和商业损失，对延期有较强抵触",
+      "surface_stance": "必须按时全量上线",
+      "deep_interest": "活动卖点就是新版体验，素材官宣已锁",
+      "moveable_zone": "学生用 F-05 数字对上 F-04 阈值、指出全量必触发事故时，她用商业语言快速倒向灰度",
+      "bottom_line": "活动不能取消；对外口径不能出现产品出问题字样",
+      "indispensable_facts": ["F-09", "F-13", "F-17"],
+      "weak_signal_facts": ["F-13", "F-17"]
+    },
+    {
+      "id": "R4",
+      "name": "许可",
+      "title": "CEO",
+      "core_concern": "整体商业目标和风险平衡",
+      "initial_trust": 50,
+      "stance": "战略平衡，关注整体风险和长期影响",
+      "personality": "宏观、战略导向，回答偏高层视角，对细节不如其他角色熟悉，但对市场态势和战略弹性有独到判断",
+      "surface_stance": "先把风险摸清再定，我支持专业判断",
+      "deep_interest": "竞品下周上线，时间窗口宝贵",
+      "moveable_zone": "当学生同时引用技术风险（F-04/F-06）和商业损失（F-09）时，她会主动给出 F-08 和 F-14 帮学生算总账",
+      "bottom_line": "不能因为保守错过窗口，但也不能翻车",
+      "indispensable_facts": ["F-08", "F-14"],
+      "weak_signal_facts": ["F-08", "F-14"]
+    }
+  ],
+
+  "facts": [
+    {
+      "id": "F-01",
+      "content": "明日 09:00 上线，市场推广活动已签约配合（KOL 3家 + 信息流广告 15万）",
+      "holder": "ALL",
+      "access_level": "L0",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "business_revenue",
+      "disclosure_condition": "initial_visible",
+      "disclosure_action": null,
+      "weak_signal": null,
+      "conflicts_with": null,
+      "state_impact": "S3_base_70",
+      "scoring_dimension": null,
+      "teaching_point": "项目背景信息，不单独评分"
+    },
+    {
+      "id": "F-02",
+      "content": "产品是支付链路 SaaS，任何支付中断直接影响客户营收",
+      "holder": "ALL",
+      "access_level": "L0",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "risk_threshold",
+      "disclosure_condition": "initial_visible",
+      "disclosure_action": null,
+      "weak_signal": null,
+      "conflicts_with": null,
+      "state_impact": "S2_base",
+      "scoring_dimension": null,
+      "teaching_point": "业务背景，理解支付链路关键性"
+    },
+    {
+      "id": "F-03",
+      "content": "新引擎 dev 分支从未复现缺陷（staging 上限 800 QPS < 触发阈值 2500）",
+      "holder": "ALL",
+      "access_level": "L0",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "risk_threshold",
+      "disclosure_condition": "initial_visible",
+      "disclosure_action": null,
+      "weak_signal": "这句话看着让人安心，但 staging 压力上限和真实峰值差多少？",
+      "conflicts_with": null,
+      "state_impact": null,
+      "scoring_dimension": null,
+      "teaching_point": "训练学生识别'真数据推出误导结论'的陷阱"
+    },
+    {
+      "id": "F-04",
+      "content": "新引擎 QPS>2500 触发缺陷，QA 已在压测环境复现确认",
+      "holder": "R2",
+      "access_level": "L2",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "risk_threshold",
+      "disclosure_condition": "structured_questioning OR formal_inquiry OR D1_B_auto_disclose",
+      "disclosure_action": "structured_questioning",
+      "weak_signal": "QA 提到'压测环境能稳定复现'但没说阈值",
+      "conflicts_with": "F-03",
+      "state_impact": "S2_risk_key",
+      "scoring_dimension": "decision_quality",
+      "teaching_point": "核心红线事实，量化阈值是方案选择的基础"
+    },
+    {
+      "id": "F-05",
+      "content": "预估活动峰值 3200 笔/秒，偏差 ±30%（实际峰值 3680，内部参数学生不可见）",
+      "holder": "ALL",
+      "access_level": "L0",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "risk_threshold",
+      "disclosure_condition": "initial_visible",
+      "disclosure_action": null,
+      "weak_signal": "预估有 ±30% 偏差——往上偏多少？",
+      "conflicts_with": null,
+      "state_impact": "S2_risk_base",
+      "scoring_dimension": "decision_quality",
+      "teaching_point": "学生需将 F-04 阈值与 F-05 峰值比对，发现全量必触发"
+    },
+    {
+      "id": "F-06",
+      "content": "修复风险预估乐观 8h，实际可能 12-19h，窗口仅 16h（D1-A 触发后暴露明细 19h）",
+      "holder": "R1",
+      "access_level": "L2",
+      "nature": "risk_prediction",
+      "credibility": "high",
+      "decision_value": "resource_allocation",
+      "disclosure_condition": "structured_questioning OR resource_inquiry OR D1_A_auto_disclose",
+      "disclosure_action": "resource_inquiry",
+      "weak_signal": "Tech 说'乐观估计8小时'但语气犹豫",
+      "conflicts_with": null,
+      "state_impact": "S1_progress_constraint",
+      "scoring_dimension": "decision_quality",
+      "teaching_point": "修复不一定来得及，时间窗口约束"
+    },
+    {
+      "id": "F-07",
+      "content": "QA 预判 50% 灰度安全（实际偏差 +15% 但结论方向正确）",
+      "holder": "R2",
+      "access_level": "L3",
+      "nature": "risk_prediction",
+      "credibility": "medium",
+      "decision_value": "risk_threshold",
+      "disclosure_condition": "trust>=配合 AND plan_negotiation OR formal_inquiry",
+      "disclosure_action": "plan_negotiation",
+      "weak_signal": "QA 说'如果比例控制好的话应该没问题'但不愿给具体数字",
+      "conflicts_with": null,
+      "state_impact": "S2_risk_assessment",
+      "scoring_dimension": "decision_quality",
+      "teaching_point": "区分结果正确与推理质量；忽视QA专业意见仍扣分"
+    },
+    {
+      "id": "F-08",
+      "content": "CEO 实际承担总损失 80万直接 + 30万品牌信誉 = 110万",
+      "holder": "R4",
+      "access_level": "L3",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "business_revenue",
+      "disclosure_condition": "trust>=配合 AND executive_alignment OR formal_inquiry(R-FA1: 前置F-09追问)",
+      "disclosure_action": "executive_alignment",
+      "weak_signal": "CEO 说'80万只是看得见的部分'但没展开",
+      "conflicts_with": "F-09",
+      "state_impact": "S3_support",
+      "scoring_dimension": "business_balance",
+      "teaching_point": "区分直接损失和隐性损失，训练全面商业评估"
+    },
+    {
+      "id": "F-09",
+      "content": "延期直接损失 80万（广告+KOL违约）",
+      "holder": "ALL",
+      "access_level": "L0",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "business_revenue",
+      "disclosure_condition": "initial_visible",
+      "disclosure_action": null,
+      "weak_signal": "80万是全部吗？有没有看不见的损失？",
+      "conflicts_with": "F-08",
+      "state_impact": "S3_support_base",
+      "scoring_dimension": "business_balance",
+      "teaching_point": "公开信息可能不完整，需追问隐藏成本"
+    },
+    {
+      "id": "F-10",
+      "content": "灰度开关 30 分钟可配置，支持按用户百分比切流",
+      "holder": "R1",
+      "access_level": "L2",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "resource_allocation",
+      "disclosure_condition": "plan_negotiation OR resource_inquiry",
+      "disclosure_action": "plan_negotiation",
+      "weak_signal": "Tech 提到'灰度技术上不是问题'",
+      "conflicts_with": null,
+      "state_impact": "S1_progress",
+      "scoring_dimension": "decision_quality",
+      "teaching_point": "灰度方案的技术可行性基础"
+    },
+    {
+      "id": "F-11",
+      "content": "Tech 的修复排期明细：总计 19h > 16h 窗口（D1-A 选择后自动触发）",
+      "holder": "R1",
+      "access_level": "L3",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "resource_allocation",
+      "disclosure_condition": "trust>=配合 AND risk_verification OR D1_A_auto_disclose",
+      "disclosure_action": "risk_verification",
+      "weak_signal": "Tech 说'排期我拉一下明细给你'但一直没拉",
+      "conflicts_with": "F-06",
+      "state_impact": "S1_progress_locked",
+      "scoring_dimension": "decision_quality",
+      "teaching_point": "修复路径的时间约束，路径依赖的直接证据"
+    },
+    {
+      "id": "F-12",
+      "content": "新引擎回滚需 5 分钟止血（切回老引擎），满足 C-04 事故响应要求",
+      "holder": "R1",
+      "access_level": "L2",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "compliance_redline",
+      "disclosure_condition": "risk_verification OR D1_B_auto_disclose",
+      "disclosure_action": "risk_verification",
+      "weak_signal": "Tech 说'万一出事能很快切回来'",
+      "conflicts_with": null,
+      "state_impact": "S2_risk_mitigation",
+      "scoring_dimension": "decision_quality",
+      "teaching_point": "应急预案的关键参数，满足硬约束C-04"
+    },
+    {
+      "id": "F-13",
+      "content": "活动页可切老引擎，老引擎稳定（但损失新版体验卖点）",
+      "holder": "R3",
+      "access_level": "L2",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "business_revenue",
+      "disclosure_condition": "plan_negotiation OR resource_inquiry",
+      "disclosure_action": "plan_negotiation",
+      "weak_signal": "运营说'有个折中方案但代价不小'",
+      "conflicts_with": null,
+      "state_impact": "S3_support",
+      "scoring_dimension": "business_balance",
+      "teaching_point": "折中方案的商业代价评估"
+    },
+    {
+      "id": "F-14",
+      "content": "竞品下周将上线同类支付功能",
+      "holder": "R4",
+      "access_level": "L3",
+      "nature": "risk_prediction",
+      "credibility": "medium",
+      "decision_value": "business_revenue",
+      "disclosure_condition": "trust>=配合 AND executive_alignment",
+      "disclosure_action": "executive_alignment",
+      "weak_signal": "CEO 说'时间窗口比你们想的更重要'",
+      "conflicts_with": null,
+      "state_impact": "S3_support",
+      "scoring_dimension": "business_balance",
+      "teaching_point": "战略层面考量，影响 Delay 决策的商业代价"
+    },
+    {
+      "id": "F-15",
+      "content": "QA 实际产能 0.7（今天只能回归 70% 用例，有效产能打折）",
+      "holder": "R2",
+      "access_level": "L3",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "resource_allocation",
+      "disclosure_condition": "trust>=配合 AND resource_inquiry OR formal_inquiry",
+      "disclosure_action": "resource_inquiry",
+      "weak_signal": "QA 说'今天能跑完的用例可能没那么多'",
+      "conflicts_with": null,
+      "state_impact": "S1_progress",
+      "scoring_dimension": "decision_quality",
+      "teaching_point": "资源估算需考虑实际产能折扣"
+    },
+    {
+      "id": "F-16",
+      "content": "P1→P2 降级方案 vs 修复工时 4h（降级可绕过阈值但留技术债）",
+      "holder": "R2",
+      "access_level": "L2",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "risk_threshold",
+      "disclosure_condition": "plan_negotiation OR risk_verification",
+      "disclosure_action": "plan_negotiation",
+      "weak_signal": "QA 提到'也不是没有绕过去的办法'",
+      "conflicts_with": null,
+      "state_impact": "S2_risk_tradeoff",
+      "scoring_dimension": "decision_quality",
+      "teaching_point": "技术妥协方案的权衡：短期绕过 vs 长期技术债"
+    },
+    {
+      "id": "F-17",
+      "content": "历史数据：支付故障导致 30% 受影响用户永久流失",
+      "holder": "R3",
+      "access_level": "L3",
+      "nature": "objective_fact",
+      "credibility": "high",
+      "decision_value": "business_revenue",
+      "disclosure_condition": "trust>=配合 AND risk_verification OR formal_inquiry",
+      "disclosure_action": "risk_verification",
+      "weak_signal": "运营说'上次出事之后流失了好大一批用户'",
+      "conflicts_with": "F-09",
+      "state_impact": "S3_support",
+      "scoring_dimension": "user_insight",
+      "teaching_point": "事故的长期商业影响，远超直接损失"
+    }
+  ],
+
+  "conflicts": [
+    {
+      "id": "X-1",
+      "type": "quantitative_fact_conflict",
+      "fact_ids": ["F-03", "F-04"],
+      "description": "F-03 显示 dev 分支从未复现缺陷（安心信号），F-04 显示 QPS>2500 必触发（风险信号）",
+      "teaching_value": "训练学生识别'真数据推出误导结论'的陷阱：staging 上限 800 < 阈值 2500，不触发是必然的",
+      "implementation": "Agent 输出 F-03 时给出弱信号提示，引导学生追问 staging 压力上限"
+    },
+    {
+      "id": "X-2",
+      "type": "risk_prediction_conflict",
+      "fact_ids": ["F-06", "F-11"],
+      "description": "F-06 说乐观 8h，F-11 明细排期 19h > 16h 窗口",
+      "teaching_value": "训练学生追问明细而非接受笼统估计",
+      "implementation": "D1-A 选择后 F-11 自动触发，学生亲历修复路径不可行"
+    },
+    {
+      "id": "X-3",
+      "type": "quantitative_fact_conflict",
+      "fact_ids": ["F-09", "F-08"],
+      "description": "F-09 公开显示延期损失 80万，F-08 CEO 掌握实际总损失 110万（含品牌信誉 30万）",
+      "teaching_value": "区分直接损失和隐性损失，训练全面商业评估",
+      "implementation": "Agent 输出可信度分层，未获取 F-08 时采信不完整数据扣减商业平衡分"
+    },
+    {
+      "id": "X-4",
+      "type": "cross_departmental_conflict",
+      "fact_ids": ["F-04", "F-09", "F-14"],
+      "description": "QA 主张修复（质量底线），运营主张按时上线（商业损失），CEO 关注战略窗口（竞品压力）",
+      "teaching_value": "训练多目标权衡和干系人协同管理",
+      "implementation": "单方面偏袒某部门降低对应角色关系状态，影响后续信息解锁"
+    }
+  ],
+
+  "hard_constraints": [
+    {
+      "id": "C-01",
+      "description": "D1 决策窗口 16h（今 17:00 - 明 09:00），资源投向须在窗口内完成",
+      "check_logic": "d1_option in ['A','B','C'] AND d1_time_cost <= 16h",
+      "violation_consequence": "方案不可执行",
+      "knowledge_point": "项目约束理论、时间管理"
+    },
+    {
+      "id": "C-02",
+      "description": "研发资源不超过 3 人天",
+      "check_logic": "decision.resource_usage <= 3",
+      "violation_consequence": "方案禁止提交；决策质量-5",
+      "knowledge_point": "资源运筹"
+    },
+    {
+      "id": "C-03",
+      "description": "活动不可取消",
+      "check_logic": "decision.option != 'cancel_activity'",
+      "violation_consequence": "方案不可执行",
+      "knowledge_point": "干系人协商、商业约束"
+    },
+    {
+      "id": "C-04",
+      "description": "事故止血时间 < 15 分钟（SLA要求）",
+      "check_logic": "if decision.option in ['Go全量','Limited_*'] then require F-12_acquired AND rollback_time < 15min",
+      "violation_consequence": "方案可提交但标注'应急能力不足'；决策质量-8",
+      "knowledge_point": "风险管理、事故响应"
+    },
+    {
+      "id": "C-05",
+      "description": "P1 缺陷不可带病全量上线",
+      "check_logic": "if decision.option == 'Go全量' then require F-04_resolved OR F-16_downgraded",
+      "violation_consequence": "Go全量方案自动标记为高风险；S2风险+25",
+      "knowledge_point": "质量管理、缺陷分级"
+    },
+    {
+      "id": "C-06",
+      "description": "D2 决策须在 21:30 前提交",
+      "check_logic": "d2_submit_time <= 21:30",
+      "violation_consequence": "超时系统自动执行默认方案（C继续回归+Go全量）",
+      "knowledge_point": "决策时效性"
+    },
+    {
+      "id": "C-07",
+      "description": "决策须引用至少 3 条事实证据",
+      "check_logic": "count(decision.cited_facts) >= 3 AND all_cited_facts_acquired",
+      "violation_consequence": "决策质量-5；幻觉证据-10/条",
+      "knowledge_point": "证据化决策"
+    }
+  ],
+
+  "state_variables": [
+    {
+      "id": "S1",
+      "name": "项目整体进度",
+      "initial_value": 90,
+      "range": [0, 100],
+      "type": "continuous",
+      "rules": {
+        "go": 90,
+        "delay": 75,
+        "limited": 85,
+        "d1_A_locked": 70,
+        "d1_B_prepared": 88,
+        "d1_C_wasted": 82
+      },
+      "cross_scene_rule": "本场景进度扣分带入下一规划场景资源约束"
+    },
+    {
+      "id": "S2",
+      "name": "线上质量风险",
+      "initial_value": "中",
+      "range": ["低", "中", "高"],
+      "type": "discrete",
+      "tier_boundaries": { "低": "0-30", "中": "31-70", "高": "71-100" },
+      "rules": {
+        "go_with_p1_unfixed": "高",
+        "go_with_p1_fixed": "低",
+        "delay": "低",
+        "limited_5pct": "低",
+        "limited_20pct": "中",
+        "limited_50pct": "高"
+      },
+      "cross_scene_rule": "高风险状态带入复盘场景，增加复盘扣分权重"
+    },
+    {
+      "id": "S3",
+      "name": "干系人组织支持度",
+      "initial_value": 70,
+      "range": [0, 100],
+      "type": "continuous",
+      "rules": {
+        "go": 50,
+        "delay_with_negotiation": 75,
+        "delay_without_negotiation": 55,
+        "limited_5pct": 78,
+        "limited_20pct": 76,
+        "limited_50pct": 72
+      },
+      "cross_scene_rule": "低分状态下，下一场景角色初始关系状态同步降低"
+    }
+  ],
+
+  "relationship_model": {
+    "initial_trust": 50,
+    "tiers": [
+      { "name": "抵触", "range": [0, 29], "signal": "回答简短，不主动补充；弱信号减少；明确表达不满", "upgrade_condition": "连续2次以上专业提问" },
+      { "name": "中性", "range": [30, 59], "signal": "正常回答但不展开；弱信号可见；不主动给额外信息", "upgrade_condition": "结构化提问/风险求证/交叉验证累积2次以上" },
+      { "name": "配合", "range": [60, 79], "signal": "回答变详细，主动补充关联信息；弱信号增加", "upgrade_condition": "方案协商/高层对齐/引用对方数据给予尊重累积3次以上" },
+      { "name": "信任", "range": [80, 100], "signal": "主动给出未问到的信息片段；愿意分享个人判断", "upgrade_condition": null }
+    ],
+    "tier_disclosure_speed": {
+      "抵触": "L2事实需3轮追问，L3不披露",
+      "中性": "L2事实需1轮追问，L3不披露",
+      "配合": "L2事实第一问即给，L3需1轮追问",
+      "信任": "L2/L3事实第一问即给"
+    },
+    "action_trust_changes": {
+      "structured_questioning": 5,
+      "risk_verification": 8,
+      "plan_negotiation": 6,
+      "resource_inquiry": 5,
+      "executive_alignment": 7,
+      "one_sided_questioning": -3,
+      "offensive_expression": -10,
+      "ignoring_role": -5
+    },
+    "cross_role_isolation": true
+  },
+
+  "formal_inquiry_rules": [
+    {
+      "id": "R-FA1",
+      "name": "前置证据法",
+      "condition": "学生已获取一条关联事实，并以此为据追问当前角色",
+      "applies_to": ["L2", "L3"],
+      "example": "学生先从运营获得 F-09（80万损失），再向 CEO 求证'80万是不是全部代价'→ 触发 F-08 披露"
+    },
+    {
+      "id": "R-FA2",
+      "name": "用途说明法",
+      "condition": "学生在提问中明确说明决策用途或分析目的",
+      "applies_to": ["L2"],
+      "example": "'我需要评估灰度比例的安全性，你的复现条件是什么？'→ 触发 F-04 披露"
+    },
+    {
+      "id": "R-FA3",
+      "name": "角色身份法",
+      "condition": "学生以项目负责人身份直接询问该角色的核心职责范围",
+      "applies_to": ["L2", "L3"],
+      "example": "'作为项目负责人我需要了解回滚能力，预案要用'→ 触发 F-12 披露"
+    }
+  ],
+
+  "result_rules": [
+    {
+      "id": "RR-1",
+      "name": "事故判定",
+      "logic": "load = 3680 × 灰度比例; if load > 2500 then 事故触发",
+      "internal_param": "3680（学生不可见，复盘揭示）",
+      "student_visible_param": "预估3200，偏差±30%",
+      "threshold": 2500,
+      "outcomes": {
+        "Go全量": "load=3680 > 2500 → 事故触发",
+        "Limited_5%": "load=184 < 2500 → 安全",
+        "Limited_20%": "load=736 < 2500 → 安全",
+        "Limited_50%": "load=1840 < 2500 → 安全（但QA预判偏差+15%后 load=2116 仍<2500，结论正确）"
+      }
+    },
+    {
+      "id": "RR-2",
+      "name": "止血能力判定",
+      "logic": "if F-12_acquired AND decision.contingency includes '监控哨兵' then rollback_time=5min < 15min → C-04满足; if F-12_not_acquired then blind_spot → C-04违反",
+      "outcomes": {
+        "F-12_acquired": "5分钟止血，C-04满足",
+        "F-12_not_acquired": "回滚能力未知，标注应急盲区，C-04违反",
+        "D1_A_selected": "无准备时间，即使知道5分钟也来不及配置，C-04违反"
+      }
+    },
+    {
+      "id": "RR-3",
+      "name": "延期损失计算",
+      "logic": "if decision.option == 'Delay_24h' then loss = 80万(F-09) + 30万品牌(F-08 if acquired else unknown)",
+      "outcomes": {
+        "F-08_acquired": "总损失110万，学生可完整评估",
+        "F-08_not_acquired": "学生只看到80万，复盘揭示额外30万品牌损失"
+      }
+    },
+    {
+      "id": "RR-4",
+      "name": "用户流失计算",
+      "logic": "if 事故触发 AND decision.option in ['Go全量'] then user_loss = affected_users × 30%(F-17)",
+      "outcomes": {
+        "Go全量_事故": "全量用户受影响，30%永久流失",
+        "Limited_50%_事故(实际不触发)": "即使偏差+15%仍<2500，不触发事故",
+        "F-17_not_acquired": "学生不知道流失率，复盘揭示长期影响"
+      }
+    },
+    {
+      "id": "RR-5",
+      "name": "竞品影响",
+      "logic": "if decision.option == 'Delay_24h' AND F-14_acquired then strategic_pressure = 'high'; if F-14_not_acquired then blind_spot",
+      "outcomes": {
+        "F-14_acquired": "学生知道竞品下周上线，Delay决策有战略代价意识",
+        "F-14_not_acquired": "学生不知道竞品压力，Delay决策缺少战略维度"
+      }
+    },
+    {
+      "id": "RR-6",
+      "name": "综合评分汇总",
+      "logic": "combine(rule_engine_score × 0.7, llm_score × 0.3) for decision_quality; other dimensions pure rule",
+      "outcomes": "最终评分 = 五维加权平均，决策质量维度为70%规则+30%LLM混合"
+    }
+  ],
+
+  "scoring": {
+    "dimensions": {
+      "user_insight": { "weight": 0.20, "engine": "rule" },
+      "decision_quality": { "weight": 0.25, "engine": "hybrid_70_30" },
+      "communication": { "weight": 0.20, "engine": "rule" },
+      "business_balance": { "weight": 0.20, "engine": "rule" },
+      "growth_reflection": { "weight": 0.15, "engine": "llm" }
+    },
+    "insight_scoring": {
+      "L0_fact": 3,
+      "L2_fact": 5,
+      "L3_fact": 8,
+      "red_line_fact_bonus": 3,
+      "max_insight_score": 25
+    },
+    "decision_quality_scoring": {
+      "constraint_satisfied": 5,
+      "evidence_cited": 3,
+      "hallucinated_evidence": -10,
+      "missing_p1_assessment": -5,
+      "ignored_qa_advice": -3,
+      "blind_spot_c04": -8
+    },
+    "communication_scoring": {
+      "per_role_interviewed": 3,
+      "trust_net_change_multiplier": 0.5,
+      "single_role_only": -8,
+      "cross_validation": 4
+    },
+    "business_balance_scoring": {
+      "s3_above_70": 5,
+      "s3_below_50": -5,
+      "s2_high": -5,
+      "s4_above_30": -8,
+      "f08_acquired_bonus": 4,
+      "f14_acquired_bonus": 3
+    },
+    "evaluation_layers": [
+      { "layer": 1, "name": "硬约束检查", "engine": "rule", "description": "C-01~C-07 逐条检查，违反即标记" },
+      { "layer": 2, "name": "事实获取评分", "engine": "rule", "description": "按 L0/L2/L3 分值累加，红线事实额外加分" },
+      { "layer": 3, "name": "决策质量评估", "engine": "hybrid", "description": "规则引擎70% + LLM辅助30%" },
+      { "layer": 4, "name": "成长反思", "engine": "llm", "description": "LLM评估复盘深度和改进方向" }
+    ]
+  },
+
+  "weak_signals": [
+    { "fact_id": "F-03", "signal": "这句话看着让人安心，但 staging 压力上限和真实峰值差多少？" },
+    { "fact_id": "F-04", "signal": "QA 提到'压测环境能稳定复现'但没说阈值" },
+    { "fact_id": "F-05", "signal": "预估有 ±30% 偏差——往上偏多少？" },
+    { "fact_id": "F-06", "signal": "Tech 说'乐观估计8小时'但语气犹豫" },
+    { "fact_id": "F-07", "signal": "QA 说'如果比例控制好的话应该没问题'但不愿给具体数字" },
+    { "fact_id": "F-08", "signal": "CEO 说'80万只是看得见的部分'但没展开" },
+    { "fact_id": "F-09", "signal": "80万是全部吗？有没有看不见的损失？" },
+    { "fact_id": "F-11", "signal": "Tech 说'排期我拉一下明细给你'但一直没拉" },
+    { "fact_id": "F-12", "signal": "Tech 说'万一出事能很快切回来'" },
+    { "fact_id": "F-13", "signal": "运营说'有个折中方案但代价不小'" },
+    { "fact_id": "F-14", "signal": "CEO 说'时间窗口比你们想的更重要'" },
+    { "fact_id": "F-15", "signal": "QA 说'今天能跑完的用例可能没那么多'" },
+    { "fact_id": "F-16", "signal": "QA 提到'也不是没有绕过去的办法'" },
+    { "fact_id": "F-17", "signal": "运营说'上次出事之后流失了好大一批用户'" }
+  ],
+
+  "fact_holder_matrix": {
+    "description": "每条红线事实恰好一个完整持有者，确保信息分散有结构保证",
+    "matrix": {
+      "F-04": { "complete_holder": "R2", "partial_holders": [], "note": "QA独有完整阈值" },
+      "F-06": { "complete_holder": "R1", "partial_holders": [], "note": "Tech独有修复风险" },
+      "F-08": { "complete_holder": "R4", "partial_holders": [], "note": "CEO独有总损失" },
+      "F-11": { "complete_holder": "R1", "partial_holders": [], "note": "Tech独有排期明细" },
+      "F-12": { "complete_holder": "R1", "partial_holders": [], "note": "Tech独有止血能力" },
+      "F-14": { "complete_holder": "R4", "partial_holders": [], "note": "CEO独有竞品情报" },
+      "F-15": { "complete_holder": "R2", "partial_holders": [], "note": "QA独有实际产能" },
+      "F-17": { "complete_holder": "R3", "partial_holders": [], "note": "运营独有流失数据" }
+    }
+  },
+
+  "indispensability_test": {
+    "description": "删除测试：删除任一角色后场景是否坍缩",
+    "results": {
+      "remove_R1_Tech": "失去 F-06/F-10/F-11/F-12，无法评估修复可行性和止血能力 → 场景坍缩",
+      "remove_R2_QA": "失去 F-04/F-07/F-15/F-16，无法获得缺陷阈值和灰度安全线 → 场景坍缩",
+      "remove_R3_Ops": "失去 F-09/F-13/F-17，无法评估商业损失和用户流失 → 场景坍缩",
+      "remove_R4_CEO": "失去 F-08/F-14，无法获得战略层信息 → 场景不坍缩但商业平衡维度受损"
+    },
+    "conclusion": "四个角色全部通过不可替代性测试"
+  },
+
+  "counterfactual_analysis": [
+    { "option": "Go全量", "condition": "F-04+F-12 acquired", "result": "load=3680>2500 事故触发，5分钟止血但30%用户已流失，S2=高，S3=50" },
+    { "option": "Go全量", "condition": "F-04 not acquired", "result": "盲目全量上线，事故触发且无预案，S2=高，S3=40，C-04/C-05违反" },
+    { "option": "Delay_24h", "condition": "F-08+F-14 acquired", "result": "延迟1天修复后上线，损失110万但无事故，S2=低，S3=75（有协商）" },
+    { "option": "Delay_24h", "condition": "F-08 not acquired", "result": "延迟避免了技术风险，但只看到80万损失不知品牌代价，S3=55（无协商）" },
+    { "option": "Limited_5%", "condition": "F-04+F-12 acquired", "result": "load=184<2500 安全，5分钟止血就绪，S2=低，S3=78" },
+    { "option": "Limited_50%", "condition": "F-07 acquired", "result": "load=1840<2500 安全（偏差+15%后2116仍安全），QA预判正确，S2=中，S3=72" },
+    { "option": "Limited_50%", "condition": "F-07 not acquired", "result": "load=1840<2500 安全但无QA专业背书，决策质量扣分（忽视QA意见-3）" },
+    { "option": "Limited_20%", "condition": "F-12 not acquired", "result": "load=736<2500 安全但回滚能力未知，C-04盲区，决策质量-8" }
+  ]
+}

@@ -1,0 +1,36 @@
+# 临时文件
+.trae-html-share-packages/
+
+# Word 临时锁文件
+~$*.docx
+
+# 旧版/已替代文档
+CareerCraft PM 模拟器_场景真值表.docx
+CareerCraft 场景真值表_上线前夜_填充版.docx
+
+# 无关图片
+GEMMA 4.jpg
+Gemma4.jpg
+微信.jpg
+
+# 无关文档
+探索实践.docx
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Node.js
+node_modules/
+npm-debug.log*
+
+# 环境变量
+.env
+.env.local

@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareerCraft 场景真值表 · 17条信息一览</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", "Helvetica Neue", sans-serif;
+    background: #0d1117; color: #c9d1d9; line-height: 1.6; padding: 24px;
+  }
+  h1 { font-size: 22px; color: #58a6ff; margin-bottom: 6px; }
+  .subtitle { color: #8b949e; font-size: 14px; margin-bottom: 20px; }
+
+  /* Legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; font-size: 13px; }
+  .legend-group { display: flex; align-items: center; gap: 8px; }
+  .legend-title { color: #8b949e; font-weight: 600; margin-right: 4px; }
+  .badge { padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+  .b-l0 { background: #1a4731; color: #56d364; border: 1px solid #238636; }
+  .b-l2 { background: #4a3800; color: #e3b341; border: 1px solid #9e6a03; }
+  .b-l3 { background: #4a1212; color: #f85149; border: 1px solid #da3633; }
+  .b-all { background: #2d333b; color: #adbacx; border: 1px solid #444c56; }
+  .b-r1 { background: #0c2d6b; color: #58a6ff; border: 1px solid #1f6feb; }
+  .b-r2 { background: #0a4032; color: #56d364; border: 1px solid #238636; }
+  .b-r3 { background: #4a2e00; color: #e3b341; border: 1px solid #9e6a03; }
+  .b-r4 { background: #3b0a52; color: #bc8cff; border: 1px solid #8957e5; }
+
+  /* Table */
+  .table-wrap { overflow-x: auto; border-radius: 8px; border: 1px solid #30363d; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  thead { background: #161b22; position: sticky; top: 0; }
+  th {
+    padding: 10px 12px; text-align: left; color: #8b949e; font-weight: 600;
+    border-bottom: 1px solid #30363d; white-space: nowrap; font-size: 12px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  td { padding: 10px 12px; border-bottom: 1px solid #21262d; vertical-align: top; }
+  tr:hover td { background: #161b22; }
+  tr:last-child td { border-bottom: none; }
+
+  .fid { font-family: "SF Mono", monospace; font-weight: 700; font-size: 13px; }
+  .fid-l0 { color: #56d364; }
+  .fid-l2 { color: #e3b341; }
+  .fid-l3 { color: #f85149; }
+
+  .content { max-width: 320px; color: #e6edf3; }
+  .weak-signal { color: #d2a8ff; font-style: italic; font-size: 12px; max-width: 220px; }
+  .conflict { color: #f85149; font-size: 12px; }
+  .no-conflict { color: #484f58; }
+  .disclose { font-size: 12px; color: #8b949e; max-width: 220px; }
+  .teaching { font-size: 12px; color: #79c0ff; max-width: 200px; }
+  .dim { font-size: 12px; }
+  .dim-decision { color: #58a6ff; }
+  .dim-business { color: #e3b341; }
+  .dim-insight { color: #bc8cff; }
+  .dim-none { color: #484f58; }
+
+  .nature-tag { font-size: 11px; padding: 1px 6px; border-radius: 3px; }
+  .n-fact { background: #1a2a1a; color: #56d364; }
+  .n-pred { background: #2a2010; color: #e3b341; }
+
+  .cred-high { color: #56d364; }
+  .cred-mid { color: #e3b341; }
+
+  /* Summary cards */
+  .summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .card { background: #161b22; border: 1px solid #30363d; border-radius: 8px; padding: 16px; }
+  .card-num { font-size: 28px; font-weight: 700; }
+  .card-label { font-size: 13px; color: #8b949e; margin-top: 4px; }
+  .card-l0 .card-num { color: #56d364; }
+  .card-l2 .card-num { color: #e3b341; }
+  .card-l3 .card-num { color: #f85149; }
+  .card-total .card-num { color: #58a6ff; }
+
+  /* Holder matrix mini */
+  .holder-matrix { margin-top: 28px; }
+  .holder-matrix h2 { font-size: 16px; color: #58a6ff; margin-bottom: 12px; }
+  .hm-table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  .hm-table th { background: #161b22; padding: 8px 12px; color: #8b949e; border: 1px solid #30363d; text-align: center; }
+  .hm-table td { padding: 8px 12px; border: 1px solid #21262d; text-align: center; }
+  .hm-table td:first-child { text-align: left; font-weight: 600; }
+  .hm-yes { color: #56d364; font-size: 16px; }
+  .hm-no { color: #30363d; }
+
+  @media (max-width: 768px) {
+    .content { max-width: 200px; }
+    .weak-signal, .disclose, .teaching { max-width: 150px; }
+  }
+</style>
+</head>
+<body>
+
+<h1>CareerCraft 场景真值表 · 17条信息一览</h1>
+<p class="subtitle">场景：上线前夜 · 星盘结算 | 版本 v0.1 | 4角色 × 17事实 × 3层信息分级</p>
+
+<!-- Summary -->
+<div class="summary">
+  <div class="card card-total"><div class="card-num">17</div><div class="card-label">事实总数</div></div>
+  <div class="card card-l0"><div class="card-num">5</div><div class="card-label">L0 公开信息（初始可见）</div></div>
+  <div class="card card-l2"><div class="card-num">7</div><div class="card-label">L2 普通隐藏（需追问）</div></div>
+  <div class="card card-l3"><div class="card-num">5</div><div class="card-label">L3 高价值隐藏（需信任+动作）</div></div>
+  <div class="card"><div class="card-num">4</div><div class="card-label">信息冲突组</div></div>
+  <div class="card"><div class="card-num">8</div><div class="card-label">红线事实（唯一持有者）</div></div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-group">
+    <span class="legend-title">层级</span>
+    <span class="badge b-l0">L0 公开</span>
+    <span class="badge b-l2">L2 隐藏</span>
+    <span class="badge b-l3">L3 高价值</span>
+  </div>
+  <div class="legend-group">
+    <span class="legend-title">持有者</span>
+    <span class="badge b-all">ALL 全员</span>
+    <span class="badge b-r1">R1 沈屹(技术)</span>
+    <span class="badge b-r2">R2 闻笛(QA)</span>
+    <span class="badge b-r3">R3 江照(运营)</span>
+    <span class="badge b-r4">R4 许可(CEO)</span>
+  </div>
+</div>
+
+<!-- Main Table -->
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+  <th>编号</th>
+  <th>事实内容</th>
+  <th>持有者</th>
+  <th>层级</th>
+  <th>性质</th>
+  <th>可信度</th>
+  <th>解锁条件</th>
+  <th>弱信号（学生可见线索）</th>
+  <th>冲突</th>
+  <th>评分维度</th>
+  <th>教学要点</th>
+</tr>
+</thead>
+<tbody>
+
+<!-- F-01 -->
+<tr>
+  <td><span class="fid fid-l0">F-01</span></td>
+  <td class="content">明日 09:00 上线，市场推广活动已签约配合（KOL 3家 + 信息流广告 15万）</td>
+  <td><span class="badge b-all">ALL</span></td>
+  <td><span class="badge b-l0">L0</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">初始可见</td>
+  <td class="weak-signal">—</td>
+  <td class="no-conflict">—</td>
+  <td class="dim dim-none">—</td>
+  <td class="teaching">项目背景信息，不单独评分</td>
+</tr>
+
+<!-- F-02 -->
+<tr>
+  <td><span class="fid fid-l0">F-02</span></td>
+  <td class="content">产品是支付链路 SaaS，任何支付中断直接影响客户营收</td>
+  <td><span class="badge b-all">ALL</span></td>
+  <td><span class="badge b-l0">L0</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">初始可见</td>
+  <td class="weak-signal">—</td>
+  <td class="no-conflict">—</td>
+  <td class="dim dim-none">—</td>
+  <td class="teaching">业务背景，理解支付链路关键性</td>
+</tr>
+
+<!-- F-03 -->
+<tr>
+  <td><span class="fid fid-l0">F-03</span></td>
+  <td class="content">新引擎 dev 分支从未复现缺陷（staging 上限 800 QPS &lt; 触发阈值 2500）</td>
+  <td><span class="badge b-all">ALL</span></td>
+  <td><span class="badge b-l0">L0</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">初始可见</td>
+  <td class="weak-signal">这句话看着让人安心，但 staging 压力上限和真实峰值差多少？</td>
+  <td class="conflict">→ F-04</td>
+  <td class="dim dim-none">—</td>
+  <td class="teaching">训练识别"真数据推出误导结论"的陷阱</td>
+</tr>
+
+<!-- F-04 -->
+<tr>
+  <td><span class="fid fid-l2">F-04</span></td>
+  <td class="content"><strong>核心红线</strong>：新引擎 QPS&gt;2500 触发缺陷，QA 已在压测环境复现确认</td>
+  <td><span class="badge b-r2">R2 闻笛</span></td>
+  <td><span class="badge b-l2">L2</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">结构化提问 / 正式询问(R-FA2) / D1-B自动</td>
+  <td class="weak-signal">QA 提到"压测环境能稳定复现"但没说阈值</td>
+  <td class="conflict">← F-03</td>
+  <td class="dim dim-decision">决策质量</td>
+  <td class="teaching">核心红线事实，量化阈值是方案选择的基础</td>
+</tr>
+
+<!-- F-05 -->
+<tr>
+  <td><span class="fid fid-l0">F-05</span></td>
+  <td class="content">预估活动峰值 3200 笔/秒，偏差 ±30%（实际峰值 3680，内部参数学生不可见）</td>
+  <td><span class="badge b-all">ALL</span></td>
+  <td><span class="badge b-l0">L0</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">初始可见</td>
+  <td class="weak-signal">预估有 ±30% 偏差——往上偏多少？</td>
+  <td class="no-conflict">—</td>
+  <td class="dim dim-decision">决策质量</td>
+  <td class="teaching">学生需将 F-04 阈值与 F-05 峰值比对，发现全量必触发</td>
+</tr>
+
+<!-- F-06 -->
+<tr>
+  <td><span class="fid fid-l2">F-06</span></td>
+  <td class="content"><strong>红线</strong>：修复风险预估乐观 8h，实际可能 12-19h，窗口仅 16h（D1-A 触发后暴露 19h）</td>
+  <td><span class="badge b-r1">R1 沈屹</span></td>
+  <td><span class="badge b-l2">L2</span></td>
+  <td><span class="nature-tag n-pred">风险预测</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">结构化提问 / 资源问询 / D1-A自动</td>
+  <td class="weak-signal">Tech 说"乐观估计8小时"但语气犹豫</td>
+  <td class="conflict">→ F-11</td>
+  <td class="dim dim-decision">决策质量</td>
+  <td class="teaching">修复不一定来得及，时间窗口约束</td>
+</tr>
+
+<!-- F-07 -->
+<tr>
+  <td><span class="fid fid-l3">F-07</span></td>
+  <td class="content">QA 预判 50% 灰度安全（实际偏差 +15% 但结论方向正确）</td>
+  <td><span class="badge b-r2">R2 闻笛</span></td>
+  <td><span class="badge b-l3">L3</span></td>
+  <td><span class="nature-tag n-pred">风险预测</span></td>
+  <td><span class="cred-mid">中</span></td>
+  <td class="disclose">信任≥配合 + 方案协商 / 正式询问</td>
+  <td class="weak-signal">QA 说"如果比例控制好的话应该没问题"但不愿给具体数字</td>
+  <td class="no-conflict">—</td>
+  <td class="dim dim-decision">决策质量</td>
+  <td class="teaching">区分结果正确与推理质量；忽视QA专业意见仍扣分</td>
+</tr>
+
+<!-- F-08 -->
+<tr>
+  <td><span class="fid fid-l3">F-08</span></td>
+  <td class="content"><strong>红线</strong>：CEO 实际承担总损失 80万直接 + 30万品牌信誉 = 110万</td>
+  <td><span class="badge b-r4">R4 许可</span></td>
+  <td><span class="badge b-l3">L3</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">信任≥配合 + 高层对齐 / 正式询问(R-FA1: 前置F-09)</td>
+  <td class="weak-signal">CEO 说"80万只是看得见的部分"但没展开</td>
+  <td class="conflict">← F-09</td>
+  <td class="dim dim-business">商业平衡</td>
+  <td class="teaching">区分直接损失和隐性损失，训练全面商业评估</td>
+</tr>
+
+<!-- F-09 -->
+<tr>
+  <td><span class="fid fid-l0">F-09</span></td>
+  <td class="content">延期直接损失 80万（广告+KOL违约）</td>
+  <td><span class="badge b-all">ALL</span></td>
+  <td><span class="badge b-l0">L0</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">初始可见</td>
+  <td class="weak-signal">80万是全部吗？有没有看不见的损失？</td>
+  <td class="conflict">→ F-08</td>
+  <td class="dim dim-business">商业平衡</td>
+  <td class="teaching">公开信息可能不完整，需追问隐藏成本</td>
+</tr>
+
+<!-- F-10 -->
+<tr>
+  <td><span class="fid fid-l2">F-10</span></td>
+  <td class="content">灰度开关 30 分钟可配置，支持按用户百分比切流</td>
+  <td><span class="badge b-r1">R1 沈屹</span></td>
+  <td><span class="badge b-l2">L2</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">方案协商 / 资源问询</td>
+  <td class="weak-signal">Tech 提到"灰度技术上不是问题"</td>
+  <td class="no-conflict">—</td>
+  <td class="dim dim-decision">决策质量</td>
+  <td class="teaching">灰度方案的技术可行性基础</td>
+</tr>
+
+<!-- F-11 -->
+<tr>
+  <td><span class="fid fid-l3">F-11</span></td>
+  <td class="content"><strong>红线</strong>：Tech 修复排期明细：总计 19h &gt; 16h 窗口（D1-A 选择后自动触发）</td>
+  <td><span class="badge b-r1">R1 沈屹</span></td>
+  <td><span class="badge b-l3">L3</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">信任≥配合 + 风险求证 / D1-A自动</td>
+  <td class="weak-signal">Tech 说"排期我拉一下明细给你"但一直没拉</td>
+  <td class="conflict">← F-06</td>
+  <td class="dim dim-decision">决策质量</td>
+  <td class="teaching">修复路径的时间约束，路径依赖的直接证据</td>
+</tr>
+
+<!-- F-12 -->
+<tr>
+  <td><span class="fid fid-l2">F-12</span></td>
+  <td class="content"><strong>红线</strong>：新引擎回滚需 5 分钟止血（切回老引擎），满足 C-04 事故响应要求</td>
+  <td><span class="badge b-r1">R1 沈屹</span></td>
+  <td><span class="badge b-l2">L2</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">风险求证 / 正式询问(R-FA3) / D1-B自动</td>
+  <td class="weak-signal">Tech 说"万一出事能很快切回来"</td>
+  <td class="no-conflict">—</td>
+  <td class="dim dim-decision">决策质量</td>
+  <td class="teaching">应急预案的关键参数，满足硬约束C-04</td>
+</tr>
+
+<!-- F-13 -->
+<tr>
+  <td><span class="fid fid-l2">F-13</span></td>
+  <td class="content">活动页可切老引擎，老引擎稳定（但损失新版体验卖点）</td>
+  <td><span class="badge b-r3">R3 江照</span></td>
+  <td><span class="badge b-l2">L2</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">方案协商 / 资源问询</td>
+  <td class="weak-signal">运营说"有个折中方案但代价不小"</td>
+  <td class="no-conflict">—</td>
+  <td class="dim dim-business">商业平衡</td>
+  <td class="teaching">折中方案的商业代价评估</td>
+</tr>
+
+<!-- F-14 -->
+<tr>
+  <td><span class="fid fid-l3">F-14</span></td>
+  <td class="content"><strong>红线</strong>：竞品下周将上线同类支付功能</td>
+  <td><span class="badge b-r4">R4 许可</span></td>
+  <td><span class="badge b-l3">L3</span></td>
+  <td><span class="nature-tag n-pred">风险预测</span></td>
+  <td><span class="cred-mid">中</span></td>
+  <td class="disclose">信任≥配合 + 高层对齐</td>
+  <td class="weak-signal">CEO 说"时间窗口比你们想的更重要"</td>
+  <td class="no-conflict">—</td>
+  <td class="dim dim-business">商业平衡</td>
+  <td class="teaching">战略层面考量，影响 Delay 决策的商业代价</td>
+</tr>
+
+<!-- F-15 -->
+<tr>
+  <td><span class="fid fid-l3">F-15</span></td>
+  <td class="content"><strong>红线</strong>：QA 实际产能 0.7（今天只能回归 70% 用例，有效产能打折）</td>
+  <td><span class="badge b-r2">R2 闻笛</span></td>
+  <td><span class="badge b-l3">L3</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">信任≥配合 + 资源问询 / 正式询问</td>
+  <td class="weak-signal">QA 说"今天能跑完的用例可能没那么多"</td>
+  <td class="no-conflict">—</td>
+  <td class="dim dim-decision">决策质量</td>
+  <td class="teaching">资源估算需考虑实际产能折扣</td>
+</tr>
+
+<!-- F-16 -->
+<tr>
+  <td><span class="fid fid-l2">F-16</span></td>
+  <td class="content">P1→P2 降级方案 vs 修复工时 4h（降级可绕过阈值但留技术债）</td>
+  <td><span class="badge b-r2">R2 闻笛</span></td>
+  <td><span class="badge b-l2">L2</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">方案协商 / 风险求证</td>
+  <td class="weak-signal">QA 提到"也不是没有绕过去的办法"</td>
+  <td class="no-conflict">—</td>
+  <td class="dim dim-decision">决策质量</td>
+  <td class="teaching">技术妥协方案的权衡：短期绕过 vs 长期技术债</td>
+</tr>
+
+<!-- F-17 -->
+<tr>
+  <td><span class="fid fid-l3">F-17</span></td>
+  <td class="content"><strong>红线</strong>：历史数据：支付故障导致 30% 受影响用户永久流失</td>
+  <td><span class="badge b-r3">R3 江照</span></td>
+  <td><span class="badge b-l3">L3</span></td>
+  <td><span class="nature-tag n-fact">事实</span></td>
+  <td><span class="cred-high">高</span></td>
+  <td class="disclose">信任≥配合 + 风险求证 / 正式询问</td>
+  <td class="weak-signal">运营说"上次出事之后流失了好大一批用户"</td>
+  <td class="conflict">← F-09</td>
+  <td class="dim dim-insight">用户洞察</td>
+  <td class="teaching">事故的长期商业影响，远超直接损失</td>
+</tr>
+
+</tbody>
+</table>
+</div>
+
+<!-- Holder Matrix -->
+<div class="holder-matrix">
+<h2>事实持有者矩阵</h2>
+<p class="subtitle">每条红线事实恰好一个完整持有者 — 删除任一角色场景即坍缩</p>
+<div class="table-wrap">
+<table class="hm-table">
+<thead>
+<tr>
+  <th style="text-align:left">事实编号</th>
+  <th>R1 沈屹(技术)</th>
+  <th>R2 闻笛(QA)</th>
+  <th>R3 江照(运营)</th>
+  <th>R4 许可(CEO)</th>
+  <th>ALL 全员</th>
+  <th>红线</th>
+</tr>
+</thead>
+<tbody>
+<tr><td>F-01</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td></tr>
+<tr><td>F-02</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td></tr>
+<tr><td>F-03</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td></tr>
+<tr><td>F-04</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">★</td></tr>
+<tr><td>F-05</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td></tr>
+<tr><td>F-06</td><td class="hm-yes">●</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">★</td></tr>
+<tr><td>F-07</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td></tr>
+<tr><td>F-08</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td><td class="hm-yes">★</td></tr>
+<tr><td>F-09</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td></tr>
+<tr><td>F-10</td><td class="hm-yes">●</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td></tr>
+<tr><td>F-11</td><td class="hm-yes">●</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">★</td></tr>
+<tr><td>F-12</td><td class="hm-yes">●</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">★</td></tr>
+<tr><td>F-13</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td></tr>
+<tr><td>F-14</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td><td class="hm-yes">★</td></tr>
+<tr><td>F-15</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">★</td></tr>
+<tr><td>F-16</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-no">·</td></tr>
+<tr><td>F-17</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">●</td><td class="hm-no">·</td><td class="hm-no">·</td><td class="hm-yes">★</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+
+</body>
+</html>
