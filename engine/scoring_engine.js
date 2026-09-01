@@ -12,6 +12,12 @@
  *
  * sessionData 包含：acquiredFacts, d1Choice, d2Decision, interviewLog,
  *                   constraintResults, stateResults, relationshipStates
+ *
+ * LLM 评分注入接口：
+ *   - sessionData.llmDecisionScore (0-100): LLM 对决策推理质量的评分，用于 decision_quality 维度的 30% 权重
+ *   - sessionData.llmReflectionScore (0-100): LLM 对学生复盘文字的评分，用于 growth_reflection 维度
+ *   - sessionData.reflectionText (string): 学生复盘文字原文，LLM 不可用时由规则兜底
+ *   当未注入 LLM 评分时，对应维度输出 pendingLLM: true，可由外部后续补充
  */
 
 'use strict';
@@ -145,8 +151,8 @@ function scoreDecisionQuality(sessionData) {
     score: -violationPenalty,
   });
 
-  // 证据引用加分
-  const citedFacts = d2Decision.cited_facts || d2Decision.citedFacts || [];
+  // 证据引用加分（兼容 evidence_refs / cited_facts / citedFacts）
+  const citedFacts = d2Decision.evidence_refs || d2Decision.cited_facts || d2Decision.citedFacts || d2Decision.d2_params?.evidence_refs || [];
   const validCitations = citedFacts.filter((f) => acquiredFacts.indexOf(f) >= 0);
   const citationBonus = validCitations.length * (DECISION_QUALITY_SCORING.evidence_cited || 3);
   ruleScore += citationBonus;

@@ -376,7 +376,8 @@ function checkC06(submitTime) {
 function checkC07(decision, acquiredFacts) {
   const def = getConstraintDef('C-07');
   const facts = Array.isArray(acquiredFacts) ? acquiredFacts : [];
-  const cited = (decision && (decision.cited_facts || decision.citedFacts || [])) || [];
+  // 兼容前端字段 evidence_refs 和引擎内部字段 cited_facts / citedFacts
+  const cited = (decision && (decision.evidence_refs || decision.cited_facts || decision.citedFacts || decision.d2_params?.evidence_refs || [])) || [];
   const citedArr = Array.isArray(cited) ? cited : [];
 
   // 检查引用数量

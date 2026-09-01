@@ -44,9 +44,15 @@ function getFactDef(factId) {
 /**
  * 创建引擎会话实例
  * 每次调用返回一个全新的、独立的会话上下文
+ * @param {object} [options] - 可选配置
+ * @param {function} [options.llmIntentClassifier] - LLM 意图分类函数 (message, context) => intentString
+ * @param {number} [options.llmDecisionScore] - LLM 决策质量评分 (0-100)
+ * @param {number} [options.llmReflectionScore] - LLM 成长反思评分 (0-100)
+ * @param {string} [options.reflectionText] - 学生复盘文字
  * @returns {object} 引擎接口对象
  */
-function createEngine() {
+function createEngine(options) {
+  options = options || {};
   // 会话级状态
   const session = {
     started: false,
@@ -69,6 +75,9 @@ function createEngine() {
     // 交叉验证计数
     crossValidationCount: 0,
 
+    // 已展示的弱信号 factId 集合（避免重复展示）
+    shownWeakSignals: new Set(),
+
     // 引擎实例
     stateEngine: null,
     relationshipEngine: null,
@@ -90,6 +99,7 @@ function createEngine() {
     session.d2Decision = null;
     session.interviewLog = [];
     session.crossValidationCount = 0;
+    session.shownWeakSignals = new Set();
 
     // 创建状态引擎和关系引擎实例
     session.stateEngine = createStateEngine();
@@ -120,9 +130,10 @@ function createEngine() {
    * 流程：意图分类 → 关系更新 → 信息披露判定
    * @param {string} roleId - 被提问角色 id（R1/R2/R3/R4）
    * @param {string} studentMessage - 学生提问原文
+   * @param {string} [preclassifiedIntent] - 外部 LLM 预分类意图（可选，跳过内置分类）
    * @returns {{actionType:string, trustChange:object, disclosedFacts:string[], formalInquiry:object, response:string}}
    */
-  function processMessage(roleId, studentMessage) {
+  function processMessage(roleId, studentMessage, preclassifiedIntent) {
     if (!session.started) {
       throw new Error('会话未初始化，请先调用 startSession()');
     }
@@ -130,8 +141,19 @@ function createEngine() {
     const relEngine = session.relationshipEngine;
     const stateEngine = session.stateEngine;
 
-    // 1. 意图分类：从学生消息推断动作类型
-    const actionType = relEngine.inferActionType(studentMessage);
+    // 1. 意图分类：优先使用 LLM 预分类 → options.llmIntentClassifier → 关键词匹配
+    let actionType;
+    if (preclassifiedIntent) {
+      actionType = preclassifiedIntent;
+    } else if (typeof options.llmIntentClassifier === 'function') {
+      actionType = options.llmIntentClassifier(studentMessage, {
+        roleId,
+        acquiredFacts: session.acquiredFacts.slice(),
+        d1Choice: session.d1Choice,
+      });
+    } else {
+      actionType = relEngine.inferActionType(studentMessage);
+    }
 
     // 2. 关系更新：根据动作类型更新信任度
     const trustChange = relEngine.applyAction(roleId, actionType);
@@ -244,11 +266,18 @@ function createEngine() {
       response = `${role ? role.name : roleId}：${factContents.join('；')}`;
     } else {
       // 未披露新事实时，给出弱信号提示
+      // 仅展示：有弱信号 + 学生尚未获取该事实 + 本轮尚未展示过
       const weakSignalFacts = roleFacts.filter(
-        (f) => f.weak_signal && studentMessage.indexOf(f.weak_signal.substring(0, 4)) < 0
+        (f) => f.weak_signal && session.acquiredFacts.indexOf(f.id) < 0
       );
       if (weakSignalFacts.length > 0 && trustChange.newTier !== '抵触') {
-        const ws = weakSignalFacts[0].weak_signal;
+        // 优先展示尚未展示过的弱信号
+        const freshSignal = weakSignalFacts.find(
+          (f) => !session.shownWeakSignals.has(f.id)
+        );
+        const signalFact = freshSignal || weakSignalFacts[0];
+        const ws = signalFact.weak_signal;
+        session.shownWeakSignals.add(signalFact.id);
         response = `${role ? role.name : roleId}：（弱信号）${ws}`;
       } else {
         response = `${role ? role.name : roleId}：我目前没有更多信息可以提供。`;
@@ -297,17 +326,52 @@ function createEngine() {
 
   /**
    * 检查交叉验证
+   * 三层检测：直接重复引用 + 冲突事实识别 + 同维度跨角色验证
    * @param {string} currentRoleId
    * @param {string[]} newlyDisclosedFacts
    */
   function checkCrossValidation(currentRoleId, newlyDisclosedFacts) {
     for (const factId of newlyDisclosedFacts) {
-      // 检查该事实是否在其他角色的对话中也被提到
+      const fact = getFactDef(factId);
+      if (!fact) continue;
+
+      // 1. 直接交叉验证：同一事实在其他角色的对话中也被提到
       const otherRoleMentions = session.interviewLog.filter(
         (entry) => entry.roleId !== currentRoleId && entry.disclosedFacts.indexOf(factId) >= 0
       );
       if (otherRoleMentions.length > 0) {
         session.crossValidationCount += 1;
+      }
+
+      // 2. 冲突识别：学生获取了与当前事实冲突的其他事实（来自不同角色）
+      if (fact.conflicts_with) {
+        const conflictId = fact.conflicts_with;
+        if (session.acquiredFacts.indexOf(conflictId) >= 0) {
+          const conflictFact = getFactDef(conflictId);
+          const conflictKey = [factId, conflictId].sort().join('↔');
+          if (!session.identifiedConflicts) session.identifiedConflicts = new Set();
+          if (!session.identifiedConflicts.has(conflictKey)) {
+            session.identifiedConflicts.add(conflictKey);
+            session.crossValidationCount += 1;
+          }
+        }
+      }
+
+      // 3. 同维度跨角色验证：同一评分维度的事实来自不同角色
+      if (fact.scoring_dimension) {
+        const sameDimFromOthers = session.acquiredFacts.filter((fid) => {
+          if (fid === factId) return false;
+          const f = getFactDef(fid);
+          return f && f.scoring_dimension === fact.scoring_dimension && f.holder !== currentRoleId && f.holder !== 'ALL';
+        });
+        if (sameDimFromOthers.length > 0) {
+          session._cvDimensionsChecked = session._cvDimensionsChecked || new Set();
+          const dimKey = `${fact.scoring_dimension}_${currentRoleId}`;
+          if (!session._cvDimensionsChecked.has(dimKey)) {
+            session._cvDimensionsChecked.add(dimKey);
+            session.crossValidationCount += 1;
+          }
+        }
       }
     }
   }
@@ -444,6 +508,10 @@ function createEngine() {
       relationshipStates,
       trustNetChanges,
       crossValidationCount: session.crossValidationCount,
+      // LLM 评分注入（由外部通过 options 或 setLLMScores 提供）
+      llmDecisionScore: session.llmDecisionScore !== undefined ? session.llmDecisionScore : options.llmDecisionScore,
+      llmReflectionScore: session.llmReflectionScore !== undefined ? session.llmReflectionScore : options.llmReflectionScore,
+      reflectionText: session.reflectionText || options.reflectionText || '',
     };
 
     // 计算评分
@@ -668,6 +736,17 @@ function createEngine() {
     get relationshipEngine() { return session.relationshipEngine; },
     // 暴露场景数据
     scenarioData,
+    // LLM 评分注入接口（供外部在复盘阶段注入 LLM 评分）
+    setLLMScores(scores) {
+      if (scores.llmDecisionScore !== undefined) session.llmDecisionScore = scores.llmDecisionScore;
+      if (scores.llmReflectionScore !== undefined) session.llmReflectionScore = scores.llmReflectionScore;
+      if (scores.reflectionText !== undefined) session.reflectionText = scores.reflectionText;
+    },
+    // 获取当前意图分类模式
+    get intentClassifierMode() {
+      if (typeof options.llmIntentClassifier === 'function') return 'llm';
+      return 'keyword_fallback';
+    },
   };
 }
 

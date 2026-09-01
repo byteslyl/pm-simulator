@@ -390,16 +390,40 @@ function createRelationshipEngine() {
 
       for (const fact of roleFacts) {
         // 检查学生消息是否引用了某条已获取的关联事实
-        // 简化逻辑：检查消息中是否出现已获取事实的 id 或内容关键词
+        // 改进：多维度关键词提取，而非仅前 4 字
         const referencedFacts = acquiredFacts.filter((fid) => {
-          // 检查消息中是否直接引用了事实 id 或包含事实内容关键词
+          // 1. 直接引用事实编号
           if (msg.indexOf(fid) >= 0) return true;
           const refFact = FACTS.find((f) => f.id === fid);
-          if (refFact && refFact.content) {
-            // 取内容的前 4 个字作为关键词匹配
-            const kw = refFact.content.substring(0, 4);
-            if (kw && msg.indexOf(kw) >= 0) return true;
+          if (!refFact) return false;
+
+          // 2. 从事实内容中提取关键词组（按标点分割，取 2-8 字片段）
+          if (refFact.content) {
+            const segments = refFact.content.split(/[，。、；,.;：:（）()]/);
+            for (const seg of segments) {
+              const trimmed = seg.trim();
+              if (trimmed.length >= 2 && trimmed.length <= 8 && msg.indexOf(trimmed) >= 0) {
+                return true;
+              }
+            }
           }
+
+          // 3. 从弱信号中提取关键词
+          if (refFact.weak_signal) {
+            const wsSegments = refFact.weak_signal.split(/[，。、；,.;：:（）()"'“”‘’]/);
+            for (const seg of wsSegments) {
+              const trimmed = seg.trim();
+              if (trimmed.length >= 2 && trimmed.length <= 8 && msg.indexOf(trimmed) >= 0) {
+                return true;
+              }
+            }
+          }
+
+          // 4. 从教学要点中提取关键词
+          if (refFact.teaching_point && msg.indexOf(refFact.teaching_point.substring(0, 4)) >= 0) {
+            return true;
+          }
+
           return false;
         });
 

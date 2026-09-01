@@ -218,15 +218,15 @@
     },
     {
       "constraint_id": "C-05",
-      "description": "灰度比例需有数据支撑",
+      "description": "P1缺陷不可带病全量上线",
       "violated": false,
-      "detail": "已获取 F-04 和 F-05"
+      "detail": "limited_release 方案，非全量上线，不触发 C-05"
     },
     {
       "constraint_id": "C-07",
-      "description": "P1缺陷须修复或灰度规避",
+      "description": "决策须引用至少3条事实证据",
       "violated": false,
-      "detail": "limited_release 方案，灰度规避"
+      "detail": "引用 3 条事实证据且全部已获取，C-07 满足"
     }
   ],
   "all_passed": true,
@@ -241,10 +241,12 @@
 | C-01 | D1 决策窗口 16h | `d1_time_cost <= 16h` | 方案不可执行 |
 | C-02 | 研发资源 ≤ 3 人天 | `resource_usage <= 3` | 禁止提交；决策质量 -5 |
 | C-03 | 活动不可取消 | `option != 'cancel_activity'` | 方案不可执行 |
-| C-04 | 回滚 ≤ 30 分钟 | `rollback_time <= 30min` | 方案不可执行 |
-| C-05 | 灰度需数据支撑 | `limited_pct requires F-04 AND F-05` | 决策质量 -3 |
-| C-06 | 延期 ≤ 24h | `delay <= 24h` | 方案不可执行 |
-| C-07 | P1 须修复或灰度规避 | `go requires F-04_resolved OR limited_release` | 方案不可执行 |
+| C-04 | 事故止血时间 < 15 分钟（需 F-12） | `rollback_time < 15min AND F-12 acquired` | 方案可提交但标注"应急能力不足"；决策质量 -8 |
+| C-05 | P1 缺陷不可带病全量上线 | `go requires p1_resolved OR p1_downgraded` | Go全量自动标记高风险；S2 风险 +25 |
+| C-06 | D2 决策须在 21:30 前提交 | `submit_time <= 21:30` | 超时系统自动执行默认方案（C+Go全量） |
+| C-07 | 决策须引用至少 3 条事实证据 | `evidence_refs.length >= 3 AND all acquired` | 决策质量 -5；幻觉证据 -10/条 |
+
+> **字段别名**：`evidence_refs`（前端字段）与 `cited_facts`（引擎内部字段）等价，引擎同时接受两种字段名。
 
 ---
 
@@ -336,7 +338,7 @@ Content-Type: application/json
   },
   "result_events": [
     { "rr_id": "RR-1", "triggered": false, "detail": "灰度20% × 实际峰值3680 = 736 < 阈值2500，未触发缺陷" },
-    { "rr_id": "RR-4", "triggered": false, "detail": "5分钟回滚能力满足C-04，未超时" }
+    { "rr_id": "RR-2", "triggered": false, "detail": "F-12已获取，5分钟回滚 < 15分钟阈值，C-04满足" }
   ]
 }
 ```
@@ -373,8 +375,8 @@ GET /api/review/{session_id}
     { "fact_id": "F-11", "status": "missed", "source": "R1", "is_red_line": true, "impact": "修复可行性未验证" }
   ],
   "constraint_results": [
-    { "constraint_id": "C-05", "violated": false, "detail": "灰度比例有数据支撑" },
-    { "constraint_id": "C-07", "violated": false, "detail": "灰度规避 P1 缺陷" }
+    { "constraint_id": "C-05", "violated": false, "detail": "limited_release 方案，非全量上线，不触发 C-05" },
+    { "constraint_id": "C-07", "violated": false, "detail": "引用 3 条事实证据且全部已获取" }
   ],
   "counterfactual": [
     { "scenario": "如果选 Go", "predicted_S1": 90, "predicted_S2": "high", "predicted_S3": 25, "rr_triggered": ["RR-1", "RR-3"], "summary": "全量触发缺陷，事故赔付+品牌损失" },
