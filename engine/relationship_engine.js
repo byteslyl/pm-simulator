@@ -574,6 +574,82 @@ function createRelationshipEngine() {
     return result;
   }
 
+  /**
+   * 获取角色的立场修饰语（披露事实时的立场表态）
+   * @param {string} roleId - 角色ID
+   * @param {string} factId - 事实ID
+   * @returns {string|null} 立场修饰语，无则返回 null
+   */
+  function getStanceReaction(roleId, factId) {
+    const role = ROLES.find((r) => r.id === roleId);
+    if (!role || !role.stance_reactions) return null;
+    return role.stance_reactions[factId] || null;
+  }
+
+  /**
+   * 获取角色被冲突事实"打脸"后的承认语
+   * @param {string} roleId - 角色ID
+   * @param {string} conflictingFactId - 学生持有的冲突事实ID
+   * @returns {string|null} 承认语，无则返回 null
+   */
+  function getConflictAcknowledgment(roleId, conflictingFactId) {
+    const role = ROLES.find((r) => r.id === roleId);
+    if (!role || !role.conflict_acknowledgments) return null;
+    return role.conflict_acknowledgments[conflictingFactId] || null;
+  }
+
+  /**
+   * 检测学生已获取的事实是否与当前角色的立场冲突
+   * 当学生持有其他角色的事实，且该事实与当前角色的立场矛盾时，
+   * 当前角色应调整态度（承认冲突而非继续坚持原立场）
+   * @param {string} roleId - 当前对话角色ID
+   * @param {string[]} acquiredFacts - 学生已获取的事实列表
+   * @returns {object[]} 冲突列表 { factId, conflictWith, acknowledgment }
+   */
+  function detectStanceConflict(roleId, acquiredFacts) {
+    const conflicts = [];
+    const role = ROLES.find((r) => r.id === roleId);
+    if (!role || !role.conflict_acknowledgments) return conflicts;
+
+    for (const factId of acquiredFacts) {
+      // 检查该事实是否在当前角色的 conflict_acknowledgments 中有定义
+      const acknowledgment = role.conflict_acknowledgments[factId];
+      if (acknowledgment) {
+        // 检查该事实是否来自其他角色（非当前角色持有）
+        const fact = FACTS.find((f) => f.id === factId);
+        const isFromOtherRole = fact && fact.holder !== roleId && fact.holder !== 'ALL';
+        if (isFromOtherRole) {
+          conflicts.push({
+            factId,
+            factContent: fact ? fact.content : '',
+            factHolder: fact ? fact.holder : 'unknown',
+            acknowledgment,
+          });
+        }
+      }
+    }
+    return conflicts;
+  }
+
+  /**
+   * 获取角色完整的立场信息（供前端展示或 LLM 提示词使用）
+   * @param {string} roleId
+   * @returns {object} { agenda, bias, stance, surface_stance, deep_interest }
+   */
+  function getRoleStance(roleId) {
+    const role = ROLES.find((r) => r.id === roleId);
+    if (!role) return null;
+    return {
+      agenda: role.agenda || null,
+      bias: role.bias || null,
+      stance: role.stance || null,
+      surface_stance: role.surface_stance || null,
+      deep_interest: role.deep_interest || null,
+      bottom_line: role.bottom_line || null,
+      moveable_zone: role.moveable_zone || null,
+    };
+  }
+
   return {
     getTier,
     getTrustValue,
@@ -586,6 +662,10 @@ function createRelationshipEngine() {
     getTrustLog,
     getTrustNetChanges,
     inferActionType,
+    getStanceReaction,
+    getConflictAcknowledgment,
+    detectStanceConflict,
+    getRoleStance,
   };
 }
 

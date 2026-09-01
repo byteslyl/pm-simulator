@@ -258,12 +258,35 @@ function createEngine(options) {
     const role = ROLES.find((r) => r.id === roleId);
     let response = '';
 
+    // 6a. 检测立场冲突：学生持有的其他角色事实是否打脸当前角色
+    const stanceConflicts = relEngine.detectStanceConflict(roleId, session.acquiredFacts);
+    let conflictPrefix = '';
+    const newConflicts = [];
+    if (stanceConflicts.length > 0) {
+      // 每个冲突只承认一次
+      session.acknowledgedConflicts = session.acknowledgedConflicts || new Set();
+      for (const sc of stanceConflicts) {
+        const key = `${roleId}:${sc.factId}`;
+        if (!session.acknowledgedConflicts.has(key)) {
+          session.acknowledgedConflicts.add(key);
+          newConflicts.push(sc);
+        }
+      }
+      if (newConflicts.length > 0) {
+        conflictPrefix = newConflicts.map((c) => c.acknowledgment).join(' ');
+      }
+    }
+
     if (disclosedFacts.length > 0) {
       const factContents = disclosedFacts.map((fid) => {
         const f = getFactDef(fid);
-        return f ? `[${fid}] ${f.content}` : fid;
+        let line = f ? `[${fid}] ${f.content}` : fid;
+        // 追加立场修饰语（角色对该事实的立场表态）
+        const stance = relEngine.getStanceReaction(roleId, fid);
+        if (stance) line += `（${stance}）`;
+        return line;
       });
-      response = `${role ? role.name : roleId}：${factContents.join('；')}`;
+      response = `${role ? role.name : roleId}：${conflictPrefix ? conflictPrefix + ' ' : ''}${factContents.join('；')}`;
     } else {
       // 未披露新事实时，给出弱信号提示
       // 仅展示：有弱信号 + 学生尚未获取该事实 + 本轮尚未展示过
@@ -278,7 +301,10 @@ function createEngine(options) {
         const signalFact = freshSignal || weakSignalFacts[0];
         const ws = signalFact.weak_signal;
         session.shownWeakSignals.add(signalFact.id);
-        response = `${role ? role.name : roleId}：（弱信号）${ws}`;
+        response = `${role ? role.name : roleId}：${conflictPrefix ? conflictPrefix + ' ' : ''}（弱信号）${ws}`;
+      } else if (conflictPrefix) {
+        // 没有新事实但有冲突承认
+        response = `${role ? role.name : roleId}：${conflictPrefix}`;
       } else {
         response = `${role ? role.name : roleId}：我目前没有更多信息可以提供。`;
       }
@@ -292,6 +318,9 @@ function createEngine(options) {
       formalInquiry,
       response,
       acquiredFactsCount: session.acquiredFacts.length,
+      // 立场化信息
+      stanceConflicts: newConflicts,
+      conflictAcknowledged: conflictPrefix.length > 0,
     };
   }
 
