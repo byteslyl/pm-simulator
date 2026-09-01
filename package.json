@@ -2,11 +2,11 @@
   "name": "careercraft-server",
   "version": "0.1.0",
   "description": "CareerCraft 项目决策模拟器 - 后端 API 层",
-  "main": "server.js",
+  "main": "backend-api/server.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "node server.js",
-    "test": "node tests/api.test.js"
+    "start": "node backend-api/server.js",
+    "dev": "node backend-api/server.js",
+    "test": "node backend-api/tests/api.test.js"
   },
   "dependencies": {
     "express": "^4.18.2",
