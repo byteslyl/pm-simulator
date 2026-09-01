@@ -31,8 +31,20 @@
 const express = require('express');
 const cors = require('cors');
 const { createEngine } = require('../engine');
+const {
+  createLLMClient,
+  classifyIntent,
+  createEngineIntentClassifier,
+  scoreDecision,
+  scoreReflection,
+} = require('./llm-adapter');
 
 const app = express();
+
+// ============ LLM 客户端初始化 ============
+const llmClient = createLLMClient();
+const llmEnabled = !!llmClient;
+console.log(`[LLM] LLM 适配器: ${llmEnabled ? '已启用' : '未启用（使用关键词兜底）'}`);
 
 // ============ 中间件 ============
 app.use(cors());
@@ -114,6 +126,8 @@ app.get('/api/health', (req, res) => {
     status: 'running',
     uptime: process.uptime(),
     sessionCount: sessionStore.size,
+    llmEnabled,
+    llmModel: llmEnabled ? llmClient.config.model : null,
     timestamp: new Date().toISOString(),
   }, '服务正常运行');
 });
@@ -161,7 +175,13 @@ app.post('/api/sessions', (req, res) => {
   try {
     const { studentId } = req.body || {};
     const sessionId = generateSessionId();
-    const engine = createEngine();
+
+    // 注入 LLM 意图分类器（如果可用）
+    const engineOptions = {};
+    if (llmEnabled) {
+      engineOptions.llmIntentClassifier = createEngineIntentClassifier(llmClient);
+    }
+    const engine = createEngine(engineOptions);
     const initResult = engine.startSession();
 
     sessionStore.set(sessionId, {
@@ -183,6 +203,7 @@ app.post('/api/sessions', (req, res) => {
       roles: initResult.roles,
       initialFacts: initResult.initialFacts,
       intentClassifierMode: engine.intentClassifierMode,
+      llmEnabled,
     }, '会话已创建');
   } catch (err) {
     errorResponse(res, 500, '创建会话失败', err.message);
@@ -232,23 +253,24 @@ app.delete('/api/sessions/:sessionId', (req, res) => {
  *   {
  *     "roleId": "R2",                      // 必填：被提问角色 ID
  *     "message": "缺陷的触发条件是什么？",   // 必填：学生提问原文
- *     "preclassifiedIntent": "risk_inquiry" // 可选：外部 LLM 预分类意图
+ *     "preclassifiedIntent": "risk_inquiry" // 可选：外部预分类意图（跳过 LLM 分类）
  *   }
+ *
+ * 当 LLM 启用时：
+ *   - 如果未提供 preclassifiedIntent，会自动调用 LLM 进行意图分类
+ *   - LLM 分类失败时自动降级到关键词分类
+ *   - 返回结果中包含 intentSource 字段（llm / keyword / preclassified）
  *
  * Response:
  *   {
- *     "actionType": "risk_inquiry",
- *     "trustChange": { ... },
- *     "disclosedFacts": ["F-04"],
- *     "disclosureDetails": [ ... ],
- *     "response": "闻笛：[F-04] 触发条件...",
- *     "acquiredFactsCount": 5,
- *     "stanceConflicts": [],
- *     "breadcrumbSignals": [],
- *     "breadcrumbProgress": {}
+ *     actionType: "risk_verification",
+ *     intentSource: "llm",
+ *     trustChange: { ... },
+ *     disclosedFacts: ["F-04"],
+ *     ...
  *   }
  */
-app.post('/api/sessions/:sessionId/messages', (req, res) => {
+app.post('/api/sessions/:sessionId/messages', async (req, res) => {
   try {
     const entry = getSession(req.params.sessionId);
     if (!entry) {
@@ -265,7 +287,29 @@ app.post('/api/sessions/:sessionId/messages', (req, res) => {
       return errorResponse(res, 400, '缺少必填参数: message');
     }
 
-    const result = entry.engine.processMessage(roleId, message, preclassifiedIntent);
+    // 意图分类：preclassifiedIntent > LLM > 关键词兜底
+    let finalIntent = preclassifiedIntent || null;
+    let intentSource = 'keyword';
+
+    if (finalIntent) {
+      intentSource = 'preclassified';
+    } else if (llmEnabled) {
+      const state = entry.engine.getState();
+      const llmIntent = await classifyIntent(message, {
+        roleId,
+        acquiredFacts: state.acquiredFacts,
+        d1Choice: state.d1Choice,
+      }, llmClient);
+
+      if (llmIntent) {
+        finalIntent = llmIntent;
+        intentSource = 'llm';
+      }
+    }
+
+    const result = entry.engine.processMessage(roleId, message, finalIntent);
+    result.intentSource = intentSource;
+
     successResponse(res, result, '消息处理完成');
   } catch (err) {
     errorResponse(res, 400, '消息处理失败', err.message);
@@ -376,32 +420,152 @@ app.get('/api/sessions/:sessionId/report', (req, res) => {
 
 /**
  * POST /api/sessions/:sessionId/llm-scores
- * 注入 LLM 评分（在复盘阶段，由外部 LLM 评估后注入）
+ * 注入或自动生成 LLM 评分
  *
- * Body:
+ * 模式 1 — 手动注入（不依赖 LLM 服务）:
+ *   Body: { "llmDecisionScore": 75, "llmReflectionScore": 80, "reflectionText": "..." }
+ *
+ * 模式 2 — LLM 自动评分（需 LLM_ENABLED=true）:
+ *   Body: { "reflectionText": "我下次会...", "autoScore": true }
+ *   自动收集会话数据，调用 LLM 评分，注入引擎
+ *
+ * Response:
  *   {
- *     "llmDecisionScore": 75,           // LLM 决策质量评分 (0-100)
- *     "llmReflectionScore": 80,         // LLM 成长反思评分 (0-100)
- *     "reflectionText": "我下次会..."   // 学生复盘文字
+ *     llmDecisionScore: 75,
+ *     llmReflectionScore: 80,
+ *     decisionFeedback: { ... },      // LLM 自动评分时返回
+ *     reflectionFeedback: { ... },    // LLM 自动评分时返回
+ *     source: "auto" | "manual"
  *   }
  */
-app.post('/api/sessions/:sessionId/llm-scores', (req, res) => {
+app.post('/api/sessions/:sessionId/llm-scores', async (req, res) => {
   try {
     const entry = getSession(req.params.sessionId);
     if (!entry) {
       return errorResponse(res, 404, '会话不存在或已过期');
     }
 
-    const { llmDecisionScore, llmReflectionScore, reflectionText } = req.body || {};
+    const { llmDecisionScore, llmReflectionScore, reflectionText, autoScore } = req.body || {};
+
+    // 模式 2：LLM 自动评分
+    if (autoScore && llmEnabled) {
+      const state = entry.engine.getState();
+      const scenarioData = entry.engine.scenarioData;
+
+      // 收集决策数据供 LLM 评分
+      const decisionData = {
+        d1Choice: state.d1Choice,
+        d2Decision: state.d2Decision,
+        acquiredFacts: state.acquiredFacts,
+        constraintResults: state.constraintResults,
+        interviewLogCount: state.interviewLogCount,
+        crossValidationCount: state.crossValidationCount,
+      };
+
+      // 收集反思数据
+      const allFacts = scenarioData.facts || [];
+      const missedRedLineFacts = allFacts
+        .filter(f => f.red_line && !state.acquiredFacts.includes(f.id))
+        .map(f => f.id);
+
+      const reflectionData = {
+        d1Choice: state.d1Choice,
+        d2Decision: state.d2Decision,
+        acquiredFacts: state.acquiredFacts,
+        missedRedLineFacts,
+        reflectionText: reflectionText || '',
+      };
+
+      // 并行调用两个 LLM 评分
+      const [decisionResult, reflectionResult] = await Promise.all([
+        scoreDecision(decisionData, llmClient),
+        scoreReflection(reflectionData, llmClient),
+      ]);
+
+      const scores = {};
+      if (decisionResult) {
+        scores.llmDecisionScore = decisionResult.score;
+      }
+      if (reflectionResult) {
+        scores.llmReflectionScore = reflectionResult.score;
+      }
+      if (reflectionText) {
+        scores.reflectionText = reflectionText;
+      }
+      entry.engine.setLLMScores(scores);
+
+      console.log(`[LLM-Score] 会话 ${req.params.sessionId} 自动评分: decision=${decisionResult?.score || 'N/A'}, reflection=${reflectionResult?.score || 'N/A'}`);
+
+      return successResponse(res, {
+        llmDecisionScore: decisionResult?.score || null,
+        llmReflectionScore: reflectionResult?.score || null,
+        decisionFeedback: decisionResult?.feedback || null,
+        reflectionFeedback: reflectionResult?.feedback || null,
+        source: 'auto',
+      }, 'LLM 自动评分完成');
+    }
+
+    // 模式 1：手动注入
     entry.engine.setLLMScores({ llmDecisionScore, llmReflectionScore, reflectionText });
 
     successResponse(res, {
       llmDecisionScore,
       llmReflectionScore,
       reflectionText: reflectionText ? reflectionText.substring(0, 100) + '...' : '',
+      source: 'manual',
     }, 'LLM 评分已注入');
   } catch (err) {
-    errorResponse(res, 400, 'LLM 评分注入失败', err.message);
+    errorResponse(res, 400, 'LLM 评分处理失败', err.message);
+  }
+});
+
+/**
+ * POST /api/sessions/:sessionId/classify-intent
+ * 独立意图分类端点（预览模式，不修改会话状态）
+ *
+ * Body:
+ *   { "message": "缺陷的触发阈值是多少？" }
+ *
+ * Response:
+ *   {
+ *     intent: "structured_questioning",
+ *     source: "llm" | "keyword",
+ *     raw: { ... }              // LLM 原始返回（仅 LLM 模式）
+ *   }
+ */
+app.post('/api/sessions/:sessionId/classify-intent', async (req, res) => {
+  try {
+    const entry = getSession(req.params.sessionId);
+    if (!entry) {
+      return errorResponse(res, 404, '会话不存在或已过期');
+    }
+
+    const { message } = req.body || {};
+    if (!message) {
+      return errorResponse(res, 400, '缺少必填参数: message');
+    }
+
+    let intent = null;
+    let source = 'keyword';
+
+    if (llmEnabled) {
+      const state = entry.engine.getState();
+      intent = await classifyIntent(message, {
+        acquiredFacts: state.acquiredFacts,
+        d1Choice: state.d1Choice,
+      }, llmClient);
+      if (intent) source = 'llm';
+    }
+
+    // 关键词兜底
+    if (!intent) {
+      const { inferActionType } = require('../engine/relationship_engine');
+      intent = inferActionType(message);
+    }
+
+    successResponse(res, { intent, source }, '意图分类完成');
+  } catch (err) {
+    errorResponse(res, 400, '意图分类失败', err.message);
   }
 });
 
@@ -543,6 +707,7 @@ app.listen(PORT, () => {
   console.log(`  服务地址: http://localhost:${PORT}`);
   console.log(`  健康检查: http://localhost:${PORT}/api/health`);
   console.log(`  场景信息: http://localhost:${PORT}/api/scenario`);
+  console.log(`  LLM 状态: ${llmEnabled ? '已启用 (' + llmClient.config.model + ')' : '未启用（关键词兜底）'}`);
   console.log(`  会话超时: ${SESSION_TIMEOUT_MS / 60000} 分钟无活动自动清理`);
   console.log('========================================');
   console.log('');
