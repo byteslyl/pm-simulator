@@ -215,6 +215,21 @@
       "disclosure_condition": "structured_questioning OR formal_inquiry OR D1_B_auto_disclose",
       "disclosure_action": "structured_questioning",
       "weak_signal": "QA 提到'压测环境能稳定复现'但没说阈值",
+      "breadcrumbs": [
+        {
+          "round": 1,
+          "signal": "压测环境能稳定复现，但具体触发条件……我今天下午才定位到",
+          "trigger_keywords": ["条件", "触发", "阈值", "什么时候", "什么情况"],
+          "trigger_intent": ["structured_questioning", "risk_verification"]
+        },
+        {
+          "round": 2,
+          "signal": "嗯，QPS超过一定值就会触发，具体的数字……你确定要知道吗？这影响方案选择",
+          "trigger_keywords": ["QPS", "多少", "具体", "数字", "值"],
+          "trigger_intent": ["structured_questioning", "risk_verification"],
+          "guaranteed_disclose": true
+        }
+      ],
       "conflicts_with": "F-03",
       "state_impact": "S2_risk_key",
       "scoring_dimension": "decision_quality",
@@ -279,6 +294,21 @@
       "disclosure_condition": "trust>=配合 AND executive_alignment OR formal_inquiry(R-FA1: 前置F-09追问)",
       "disclosure_action": "executive_alignment",
       "weak_signal": "CEO 说'80万只是看得见的部分'但没展开",
+      "breadcrumbs": [
+        {
+          "round": 1,
+          "signal": "80万只是看得见的部分……还有些隐性成本，不过那个不太好量化",
+          "trigger_keywords": ["隐性", "看不见", "还有什么", "全部", "总代价", "其他"],
+          "trigger_intent": ["executive_alignment", "structured_questioning"]
+        },
+        {
+          "round": 2,
+          "signal": "上次类似事故后，品牌信誉受损导致的流失大概值30万……加上直接的80万，你算算总数",
+          "trigger_keywords": ["品牌", "信誉", "流失", "30万", "总", "加起来"],
+          "trigger_intent": ["executive_alignment", "structured_questioning"],
+          "guaranteed_disclose": true
+        }
+      ],
       "conflicts_with": "F-09",
       "state_impact": "S3_support",
       "scoring_dimension": "business_balance",
@@ -327,6 +357,21 @@
       "disclosure_condition": "trust>=配合 AND risk_verification OR D1_A_auto_disclose",
       "disclosure_action": "risk_verification",
       "weak_signal": "Tech 说'排期我拉一下明细给你'但一直没拉",
+      "breadcrumbs": [
+        {
+          "round": 1,
+          "signal": "排期我拉一下明细给你……不过有几个模块的工时不太好估",
+          "trigger_keywords": ["明细", "排期", "多久", "几个模块", "工时", "拉了"],
+          "trigger_intent": ["resource_inquiry", "risk_verification"]
+        },
+        {
+          "round": 2,
+          "signal": "你非要现在看的话……8个模块，短的1小时长的4小时，加起来比16小时窗口还多，具体是19小时",
+          "trigger_keywords": ["19", "模块", "小时", "加起来", "超过", "来不及"],
+          "trigger_intent": ["resource_inquiry", "risk_verification"],
+          "guaranteed_disclose": true
+        }
+      ],
       "conflicts_with": "F-06",
       "state_impact": "S1_progress_locked",
       "scoring_dimension": "decision_quality",
@@ -343,6 +388,21 @@
       "disclosure_condition": "risk_verification OR D1_B_auto_disclose",
       "disclosure_action": "risk_verification",
       "weak_signal": "Tech 说'万一出事能很快切回来'",
+      "breadcrumbs": [
+        {
+          "round": 1,
+          "signal": "万一出事能很快切回来，回滚方案其实已经准备好了",
+          "trigger_keywords": ["多久", "几分钟", "多快", "切回来", "回滚", "止血"],
+          "trigger_intent": ["risk_verification"]
+        },
+        {
+          "round": 2,
+          "signal": "切回老引擎大概5分钟就能止血，新版老版数据格式兼容的，这个你可以放心",
+          "trigger_keywords": ["5分钟", "老引擎", "兼容", "具体", "多久"],
+          "trigger_intent": ["risk_verification"],
+          "guaranteed_disclose": true
+        }
+      ],
       "conflicts_with": null,
       "state_impact": "S2_risk_mitigation",
       "scoring_dimension": "decision_quality",
@@ -375,6 +435,21 @@
       "disclosure_condition": "trust>=配合 AND executive_alignment",
       "disclosure_action": "executive_alignment",
       "weak_signal": "CEO 说'时间窗口比你们想的更重要'",
+      "breadcrumbs": [
+        {
+          "round": 1,
+          "signal": "时间窗口比你们想的更重要……市场不会等你",
+          "trigger_keywords": ["窗口", "市场", "什么意思", "竞品", "对手", "谁"],
+          "trigger_intent": ["executive_alignment"]
+        },
+        {
+          "round": 2,
+          "signal": "你知道竞品下周要上线同类支付功能吗？时间窗口比你们想的更重要，每拖一天都在给对手机会",
+          "trigger_keywords": ["竞品", "下周", "同类", "支付", "对手", "上线"],
+          "trigger_intent": ["executive_alignment"],
+          "guaranteed_disclose": true
+        }
+      ],
       "conflicts_with": null,
       "state_impact": "S3_support",
       "scoring_dimension": "business_balance",
@@ -423,6 +498,21 @@
       "disclosure_condition": "trust>=配合 AND risk_verification OR formal_inquiry",
       "disclosure_action": "risk_verification",
       "weak_signal": "运营说'上次出事之后流失了好大一批用户'",
+      "breadcrumbs": [
+        {
+          "round": 1,
+          "signal": "上次出事之后流失了好大一批用户……这个真的要避免",
+          "trigger_keywords": ["多少", "比例", "流失", "一批", "具体", "多少用户"],
+          "trigger_intent": ["risk_verification", "structured_questioning"]
+        },
+        {
+          "round": 2,
+          "signal": "历史数据摆在那里，30%受影响的用户再也没有回来过……这就是为什么我特别紧张这次上线",
+          "trigger_keywords": ["30%", "30", "历史", "数据", "回来", "永久"],
+          "trigger_intent": ["risk_verification", "structured_questioning"],
+          "guaranteed_disclose": true
+        }
+      ],
       "conflicts_with": "F-09",
       "state_impact": "S3_support",
       "scoring_dimension": "user_insight",

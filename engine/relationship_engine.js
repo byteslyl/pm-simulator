@@ -650,6 +650,70 @@ function createRelationshipEngine() {
     };
   }
 
+  // ==================== 面包屑系统 ====================
+
+  /**
+   * 获取事实的面包屑链
+   * @param {string} factId
+   * @returns {object[]|null} 面包屑数组，无则 null
+   */
+  function getBreadcrumbs(factId) {
+    const fact = FACTS.find((f) => f.id === factId);
+    if (!fact || !fact.breadcrumbs) return null;
+    return fact.breadcrumbs;
+  }
+
+  /**
+   * 检查学生消息是否匹配面包屑的触发条件
+   * @param {string} message - 学生消息
+   * @param {string} actionType - 当前意图类型
+   * @param {object} breadcrumb - 面包屑节点
+   * @returns {boolean}
+   */
+  function matchBreadcrumbTrigger(message, actionType, breadcrumb) {
+    if (!message) return false;
+    const msg = message.toLowerCase();
+
+    // 检查关键词匹配
+    const keywordMatch = (breadcrumb.trigger_keywords || []).some(
+      (kw) => msg.indexOf(kw.toLowerCase()) >= 0
+    );
+
+    // 检查意图匹配
+    const intentMatch = (breadcrumb.trigger_intent || []).some(
+      (intent) => intent === actionType
+    );
+
+    return keywordMatch || intentMatch;
+  }
+
+  /**
+   * 获取当前应展示的面包屑层级
+   * @param {string} factId
+   * @param {number} currentRound - 当前面包屑轮次（0=未开始，1=已展示第1级，2=已展示第2级）
+   * @returns {object|null} 当前面包屑节点
+   */
+  function getCurrentBreadcrumb(factId, currentRound) {
+    const breadcrumbs = getBreadcrumbs(factId);
+    if (!breadcrumbs) return null;
+    // currentRound 表示已展示到的轮次，下一个应展示 currentRound+1
+    const nextRound = currentRound + 1;
+    return breadcrumbs.find((b) => b.round === nextRound) || null;
+  }
+
+  /**
+   * 检查面包屑是否已到达保证披露层级
+   * @param {string} factId
+   * @param {number} currentRound
+   * @returns {boolean}
+   */
+  function isBreadcrumbGuaranteed(factId, currentRound) {
+    const breadcrumbs = getBreadcrumbs(factId);
+    if (!breadcrumbs) return false;
+    const currentBc = breadcrumbs.find((b) => b.round === currentRound);
+    return !!(currentBc && currentBc.guaranteed_disclose);
+  }
+
   return {
     getTier,
     getTrustValue,
@@ -666,6 +730,11 @@ function createRelationshipEngine() {
     getConflictAcknowledgment,
     detectStanceConflict,
     getRoleStance,
+    // 面包屑系统
+    getBreadcrumbs,
+    matchBreadcrumbTrigger,
+    getCurrentBreadcrumb,
+    isBreadcrumbGuaranteed,
   };
 }
 

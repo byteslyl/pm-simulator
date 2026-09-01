@@ -100,6 +100,10 @@ function createEngine(options) {
     session.interviewLog = [];
     session.crossValidationCount = 0;
     session.shownWeakSignals = new Set();
+    // 面包屑追踪：factId → 当前轮次（0=未开始，1=已展示第1级，2=已展示第2级）
+    session.breadcrumbProgress = {};
+    // 已通过面包屑保证披露的事实
+    session.breadcrumbDisclosed = new Set();
 
     // 创建状态引擎和关系引擎实例
     session.stateEngine = createStateEngine();
@@ -239,6 +243,61 @@ function createEngine(options) {
       }
     }
 
+    // 3d. 面包屑系统：对未通过正常路径披露的事实，检查面包屑推进
+    const breadcrumbSignals = []; // 本轮要展示的面包屑信号
+    for (const fact of roleFacts) {
+      // 跳过已获取的事实
+      if (session.acquiredFacts.indexOf(fact.id) >= 0) continue;
+      // 跳过已通过正式质询处理的事实
+      if (formalInquiry.canDiscloseFacts.indexOf(fact.id) >= 0) continue;
+      // 只处理有面包屑的事实
+      if (!fact.breadcrumbs) continue;
+
+      const currentRound = session.breadcrumbProgress[fact.id] || 0;
+      const nextBreadcrumb = relEngine.getCurrentBreadcrumb(fact.id, currentRound);
+
+      if (!nextBreadcrumb) continue; // 面包屑已走完
+
+      // 检查学生消息是否匹配面包屑触发条件
+      const triggered = relEngine.matchBreadcrumbTrigger(
+        studentMessage, actionType, nextBreadcrumb
+      );
+
+      if (triggered) {
+        // 推进面包屑轮次
+        session.breadcrumbProgress[fact.id] = nextBreadcrumb.round;
+
+        if (nextBreadcrumb.guaranteed_disclose) {
+          // 到达保证披露层级：直接披露事实，绕过信任档位
+          if (session.acquiredFacts.indexOf(fact.id) < 0) {
+            session.acquiredFacts.push(fact.id);
+            disclosedFacts.push(fact.id);
+            session.breadcrumbDisclosed.add(fact.id);
+            relEngine.markDisclosed(roleId, fact.id);
+            disclosureDetails.push({
+              factId: fact.id,
+              source: 'breadcrumb_guaranteed',
+              breadcrumbRound: nextBreadcrumb.round,
+              fact,
+            });
+          }
+        } else {
+          // 未到达保证披露：展示面包屑信号
+          breadcrumbSignals.push({
+            factId: fact.id,
+            signal: nextBreadcrumb.signal,
+            round: nextBreadcrumb.round,
+          });
+          disclosureDetails.push({
+            factId: fact.id,
+            source: 'breadcrumb_signal',
+            breadcrumbRound: nextBreadcrumb.round,
+            signal: nextBreadcrumb.signal,
+          });
+        }
+      }
+    }
+
     // 4. 检查交叉验证：学生是否对同一事实从不同角色获取信息
     // 简化逻辑：如果学生在不同角色的对话中提到了同一事实
     checkCrossValidation(roleId, disclosedFacts);
@@ -287,11 +346,15 @@ function createEngine(options) {
         return line;
       });
       response = `${role ? role.name : roleId}：${conflictPrefix ? conflictPrefix + ' ' : ''}${factContents.join('；')}`;
+    } else if (breadcrumbSignals.length > 0) {
+      // 优先展示面包屑信号（比弱信号更具体）
+      const bc = breadcrumbSignals[0];
+      response = `${role ? role.name : roleId}：${conflictPrefix ? conflictPrefix + ' ' : ''}（线索）${bc.signal}`;
     } else {
       // 未披露新事实时，给出弱信号提示
       // 仅展示：有弱信号 + 学生尚未获取该事实 + 本轮尚未展示过
       const weakSignalFacts = roleFacts.filter(
-        (f) => f.weak_signal && session.acquiredFacts.indexOf(f.id) < 0
+        (f) => f.weak_signal && !f.breadcrumbs && session.acquiredFacts.indexOf(f.id) < 0
       );
       if (weakSignalFacts.length > 0 && trustChange.newTier !== '抵触') {
         // 优先展示尚未展示过的弱信号
@@ -321,6 +384,9 @@ function createEngine(options) {
       // 立场化信息
       stanceConflicts: newConflicts,
       conflictAcknowledged: conflictPrefix.length > 0,
+      // 面包屑信息
+      breadcrumbSignals,
+      breadcrumbProgress: Object.assign({}, session.breadcrumbProgress),
     };
   }
 
