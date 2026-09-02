@@ -714,6 +714,61 @@ function createRelationshipEngine() {
     return !!(currentBc && currentBc.guaranteed_disclose);
   }
 
+  /**
+   * 检测超纲提问：学生是否向当前角色提出了不属于其领域的问题
+   * 判定逻辑：
+   * 1. 如果消息匹配当前角色的 domain_keywords → 在领域内
+   * 2. 如果消息不匹配任何角色的 domain_keywords → 通识问题，不算超纲
+   * 3. 如果消息不匹配当前角色，但匹配其他角色的 domain_keywords → 超纲
+   * @param {string} roleId - 当前对话角色 ID
+   * @param {string} studentMessage - 学生消息
+   * @returns {{isOutOfScope:boolean, matchedRole:string|null, matchedKeywords:string[]}}
+   */
+  function detectOutOfScope(roleId, studentMessage) {
+    if (!studentMessage) return { isOutOfScope: false, matchedRole: null, matchedKeywords: [] };
+    const msg = studentMessage.toLowerCase();
+    const currentRole = ROLES.find((r) => r.id === roleId);
+    if (!currentRole || !currentRole.domain_keywords) {
+      return { isOutOfScope: false, matchedRole: null, matchedKeywords: [] };
+    }
+
+    // 通识关键词：这些词不算任何角色的专属领域
+    const generalKeywords = ['怎么', '怎么看', '怎么办', '建议', '方案', '决策', '决定', '上线', '灰度', '风险', '计划', '问题', '情况', '想法', '意见', '看法', '你觉得', '你认为', '能不能', '是否', '应该', '如何', '什么', '哪些', '介绍', '说说', '聊聊', '讨论', '评估'];
+
+    // 1. 检查是否匹配当前角色的领域关键词
+    const currentDomainKws = currentRole.domain_keywords.map((kw) => kw.toLowerCase());
+    const currentMatches = currentDomainKws.filter((kw) => msg.indexOf(kw) >= 0);
+
+    // 如果匹配当前角色领域 → 不超纲
+    if (currentMatches.length > 0) {
+      return { isOutOfScope: false, matchedRole: roleId, matchedKeywords: currentMatches };
+    }
+
+    // 2. 检查是否匹配其他角色的领域关键词
+    const otherRoles = ROLES.filter((r) => r.id !== roleId && r.domain_keywords);
+    let bestMatch = null;
+    let bestMatchKws = [];
+
+    for (const role of otherRoles) {
+      const otherKws = role.domain_keywords.map((kw) => kw.toLowerCase());
+      const matches = otherKws.filter((kw) => msg.indexOf(kw) >= 0);
+
+      // 排除通识关键词的干扰：如果匹配的关键词全是通识词，不算超纲
+      const specificMatches = matches.filter((kw) => !generalKeywords.some((gk) => gk === kw));
+      if (specificMatches.length > 0 && specificMatches.length > bestMatchKws.length) {
+        bestMatch = role.id;
+        bestMatchKws = specificMatches;
+      }
+    }
+
+    if (bestMatch) {
+      return { isOutOfScope: true, matchedRole: bestMatch, matchedKeywords: bestMatchKws };
+    }
+
+    // 3. 没有匹配任何角色的领域关键词 → 通识问题，不超纲
+    return { isOutOfScope: false, matchedRole: null, matchedKeywords: [] };
+  }
+
   return {
     getTier,
     getTrustValue,
@@ -730,6 +785,7 @@ function createRelationshipEngine() {
     getConflictAcknowledgment,
     detectStanceConflict,
     getRoleStance,
+    detectOutOfScope,
     // 面包屑系统
     getBreadcrumbs,
     matchBreadcrumbTrigger,

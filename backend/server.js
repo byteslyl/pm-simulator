@@ -51,6 +51,13 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
+// 托管前端页面
+const path = require('path');
+const frontendPath = path.join(__dirname, '..', 'frontend.html');
+app.get('/', (req, res) => {
+  res.sendFile(frontendPath);
+});
+
 // 请求日志中间件
 app.use((req, res, next) => {
   const ts = new Date().toISOString();

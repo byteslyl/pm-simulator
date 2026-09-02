@@ -1,0 +1,2247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CareerCraft 项目决策模拟器 · 上线前夜</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600;800&display=swap');
+
+:root {
+  --bg-base: #0a0e14;
+  --bg-panel: #111721;
+  --bg-card: #1a2230;
+  --bg-hover: #222d3d;
+  --border: #2a3647;
+  --border-active: #3d5170;
+  --text-primary: #e8edf5;
+  --text-secondary: #8b9ab4;
+  --text-muted: #5a6d8a;
+  --accent: #ff9a3c;
+  --accent-glow: #ff9a3c33;
+  --accent-dim: #c77a2e;
+  --danger: #ef4f5e;
+  --danger-glow: #ef4f5e22;
+  --success: #3dd68c;
+  --info: #4fb8e8;
+  --purple: #b86eff;
+  --radius: 6px;
+  --radius-lg: 10px;
+  --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
+  --mono: 'JetBrains Mono', 'Courier New', monospace;
+  --sans: 'Noto Sans SC', -apple-system, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body { height: 100%; overflow: hidden; }
+
+body {
+  font-family: var(--sans);
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Subtle grain overlay */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    radial-gradient(circle at 20% 30%, rgba(255,154,60,0.04) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(75,184,232,0.03) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ===== Layout ===== */
+.app {
+  display: grid;
+  grid-template-rows: 56px 1fr auto;
+  grid-template-columns: 280px 1fr 320px;
+  grid-template-areas:
+    "header header header"
+    "sidebar chat info"
+    "footer footer footer";
+  height: 100vh;
+  position: relative;
+  z-index: 1;
+}
+
+/* ===== Header ===== */
+.header {
+  grid-area: header;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+
+.header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0.5;
+}
+
+.header-left { display: flex; align-items: center; gap: 16px; }
+
+.logo {
+  font-family: var(--mono);
+  font-weight: 800;
+  font-size: 16px;
+  letter-spacing: -0.5px;
+  color: var(--accent);
+  text-transform: uppercase;
+}
+
+.logo span { color: var(--text-secondary); font-weight: 400; }
+
+.scenario-tag {
+  padding: 4px 12px;
+  background: var(--accent-glow);
+  border: 1px solid var(--accent-dim);
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+.header-right { display: flex; align-items: center; gap: 20px; font-size: 12px; }
+
+.timeline-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.timeline-item .dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.timeline-item.active .dot { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+.timeline-item.done .dot { background: var(--success); }
+.timeline-item.active { color: var(--accent); }
+
+.connection-status {
+  display: flex; align-items: center; gap: 6px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+}
+
+.connection-status .pulse {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.connection-status.disconnected .pulse { background: var(--danger); animation: none; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* ===== Sidebar — Roles ===== */
+.sidebar {
+  grid-area: sidebar;
+  background: var(--bg-panel);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 16px 0;
+}
+
+.sidebar-title {
+  padding: 0 16px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+}
+
+.role-list { display: flex; flex-direction: column; gap: 2px; padding: 0 8px; }
+
+.role-card {
+  padding: 12px 14px;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  position: relative;
+}
+
+.role-card:hover { background: var(--bg-hover); }
+
+.role-card.active {
+  background: var(--bg-card);
+  border-color: var(--accent-dim);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.role-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+
+.role-avatar {
+  width: 32px; height: 32px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 13px;
+  flex-shrink: 0;
+}
+
+.role-avatar.r1 { background: #2d4a6e; color: #7eb8e8; }
+.role-avatar.r2 { background: #4a2d3e; color: #e87ea0; }
+.role-avatar.r3 { background: #2d4e3e; color: #6ee8a0; }
+.role-avatar.r4 { background: #4e4a2d; color: #e8c87e; }
+
+.role-info { flex: 1; min-width: 0; }
+.role-name { font-weight: 600; font-size: 13px; }
+.role-title { font-size: 11px; color: var(--text-muted); }
+
+.trust-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+.trust-track {
+  flex: 1;
+  height: 4px;
+  background: var(--bg-base);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.trust-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+.trust-tier {
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+  text-transform: uppercase;
+}
+
+.trust-tier.resistant { background: #4a1e2a; color: var(--danger); }
+.trust-tier.neutral { background: #2a3a4a; color: var(--text-secondary); }
+.trust-tier.cooperative { background: #1e3a4a; color: var(--info); }
+.trust-tier.trusting { background: #1e4a3a; color: var(--success); }
+
+/* ===== Chat Area ===== */
+.chat-area {
+  grid-area: chat;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-base);
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.chat-message {
+  display: flex;
+  gap: 12px;
+  max-width: 75%;
+  animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.chat-message.user { align-self: flex-end; flex-direction: row-reverse; }
+
+.message-avatar {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 700; font-size: 14px;
+  flex-shrink: 0;
+}
+
+.message-avatar.user { background: var(--accent-dim); color: var(--accent); }
+.message-avatar.r1 { background: #2d4a6e; color: #7eb8e8; }
+.message-avatar.r2 { background: #4a2d3e; color: #e87ea0; }
+.message-avatar.r3 { background: #2d4e3e; color: #6ee8a0; }
+.message-avatar.r4 { background: #4e4a2d; color: #e8c87e; }
+.message-avatar.system { background: var(--border); color: var(--text-secondary); }
+
+.message-bubble {
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+  font-size: 14px;
+  line-height: 1.6;
+  position: relative;
+}
+
+.chat-message.user .message-bubble {
+  background: var(--accent-dim);
+  color: var(--accent);
+  border-bottom-right-radius: 2px;
+}
+
+.chat-message.role .message-bubble {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-bottom-left-radius: 2px;
+}
+
+.chat-message.system .message-bubble {
+  background: transparent;
+  border: 1px dashed var(--border);
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+  max-width: 100%;
+  align-self: center;
+}
+
+.message-meta {
+  display: flex;
+  gap: 8px;
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+  font-family: var(--mono);
+}
+
+.message-meta .intent-tag {
+  padding: 1px 6px;
+  border-radius: 3px;
+  background: var(--bg-hover);
+}
+
+.message-meta .intent-tag.llm { background: #1e3a4a; color: var(--info); }
+.message-meta .intent-tag.keyword { background: #3a3a2a; color: #c8c87e; }
+
+.fact-disclosure {
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: var(--bg-base);
+  border-left: 2px solid var(--accent);
+  border-radius: 4px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.fact-disclosure .fact-id {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.fact-disclosure.red-line {
+  border-left-color: var(--danger);
+}
+
+.fact-disclosure.red-line .fact-id { color: var(--danger); }
+
+/* Chat input */
+.chat-input-area {
+  padding: 12px 24px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg-panel);
+}
+
+.chat-input-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 12px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-size: 14px;
+  font-family: var(--sans);
+  resize: none;
+  min-height: 44px;
+  max-height: 120px;
+  transition: border-color 0.2s;
+}
+
+.chat-input:focus {
+  outline: none;
+  border-color: var(--accent-dim);
+  box-shadow: 0 0 0 2px var(--accent-glow);
+}
+
+.chat-input::placeholder { color: var(--text-muted); }
+
+.send-btn {
+  padding: 12px 20px;
+  background: var(--accent);
+  color: var(--bg-base);
+  border: none;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.send-btn:hover { background: #ffb05c; }
+.send-btn:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
+
+/* Quick prompts */
+.quick-prompts {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.quick-prompt {
+  padding: 5px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font-size: 12px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.quick-prompt:hover {
+  border-color: var(--accent-dim);
+  color: var(--accent);
+  background: var(--accent-glow);
+}
+
+/* ===== Info Panel ===== */
+.info-panel {
+  grid-area: info;
+  background: var(--bg-panel);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 16px 0;
+}
+
+.info-title {
+  padding: 0 16px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--text-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.info-count {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--accent);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.fact-list { padding: 0 8px; display: flex; flex-direction: column; gap: 6px; }
+
+.fact-card {
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 12px;
+  transition: border-color 0.2s;
+}
+
+.fact-card:hover { border-color: var(--border-active); }
+
+.fact-card.red-line { border-left: 2px solid var(--danger); }
+.fact-card.normal { border-left: 2px solid var(--info); }
+
+.fact-card-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.fact-id {
+  font-family: var(--mono);
+  font-weight: 700;
+  font-size: 11px;
+  color: var(--accent);
+}
+
+.fact-card.red-line .fact-id { color: var(--danger); }
+
+.fact-level {
+  font-family: var(--mono);
+  font-size: 9px;
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: var(--bg-base);
+  color: var(--text-muted);
+}
+
+.fact-level.L0 { color: var(--success); }
+.fact-level.L1 { color: var(--info); }
+.fact-level.L2 { color: var(--accent); }
+
+.fact-content {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.fact-holder {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+.fact-weak-signal {
+  margin-top: 6px;
+  padding: 4px 8px;
+  background: var(--bg-base);
+  border-radius: 3px;
+  font-size: 10px;
+  color: var(--purple);
+  font-style: italic;
+}
+
+/* Breadcrumb signal */
+.breadcrumb-signal {
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: rgba(184,110,255,0.08);
+  border: 1px dashed var(--purple);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--purple);
+  animation: fadeIn 0.4s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Stance conflict */
+.stance-conflict {
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: rgba(239,79,94,0.08);
+  border: 1px solid rgba(239,79,94,0.3);
+  border-radius: 4px;
+  font-size: 11px;
+  color: var(--danger);
+}
+
+/* ===== Footer / Decision Bar ===== */
+.footer {
+  grid-area: footer;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border);
+  padding: 12px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.footer-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.phase-indicator {
+  display: flex;
+  gap: 4px;
+}
+
+.phase-dot {
+  width: 28px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+}
+
+.phase-dot.active { background: var(--accent); box-shadow: 0 0 6px var(--accent-glow); }
+.phase-dot.done { background: var(--success); }
+
+.footer-actions { display: flex; gap: 10px; }
+
+.btn {
+  padding: 10px 20px;
+  border-radius: var(--radius);
+  font-weight: 600;
+  font-size: 13px;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+  font-family: var(--sans);
+}
+
+.btn-primary {
+  background: var(--accent);
+  color: var(--bg-base);
+}
+
+.btn-primary:hover { background: #ffb05c; }
+.btn-primary:disabled { background: var(--border); color: var(--text-muted); cursor: not-allowed; }
+
+.btn-secondary {
+  background: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover { border-color: var(--border-active); background: var(--bg-hover); }
+
+.btn-danger {
+  background: transparent;
+  color: var(--danger);
+  border: 1px solid rgba(239,79,94,0.3);
+}
+
+.btn-danger:hover { background: var(--danger-glow); }
+
+/* ===== Report Page (full screen) ===== */
+.report-page {
+  position: fixed; inset: 0; background: var(--bg-base); z-index: 90; overflow-y: auto; display: none;
+}
+.report-page.active { display: block; }
+.report-page-header {
+  position: sticky; top: 0; background: var(--bg-panel); border-bottom: 1px solid var(--border);
+  padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; z-index: 10;
+}
+.report-page-title { font-size: 20px; font-weight: 700; }
+.report-page-content { max-width: 900px; margin: 0 auto; padding: 32px; }
+.score-hero { text-align: center; padding: 32px; background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 32px; }
+.score-hero-value { font-family: var(--mono); font-size: 56px; font-weight: 900; line-height: 1; }
+.score-hero-grade { font-size: 16px; color: var(--text-secondary); margin-top: 8px; }
+.score-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.score-card { padding: 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); }
+.score-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+.score-value { font-family: var(--mono); font-size: 32px; font-weight: 800; margin: 4px 0; }
+.score-value.high { color: var(--success); }
+.score-value.mid { color: var(--accent); }
+.score-value.low { color: var(--danger); }
+.score-detail { font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+.score-max { font-size: 16px; color: var(--text-muted); font-weight: 400; }
+.evidence-item { display: flex; gap: 8px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13px; }
+.evidence-item:last-child { border-bottom: none; }
+.evidence-status { font-family: var(--mono); font-weight: 700; min-width: 16px; }
+.evidence-status.found { color: var(--success); }
+.evidence-status.missed { color: var(--danger); }
+.evidence-content { flex: 1; color: var(--text-secondary); }
+.evidence-source { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+.suggestion-item { padding: 10px 12px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); font-size: 13px; color: var(--text-secondary); margin-bottom: 8px; }
+.suggestion-item.constraint { border-left: 3px solid var(--danger); }
+.suggestion-item.improvement { border-left: 3px solid var(--accent); }
+.suggestion-item.coverage { border-left: 3px solid var(--info); }
+.counterfactual-item { padding: 12px 16px; background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; }
+.counterfactual-item.student { border-color: var(--accent); background: var(--accent-glow); }
+.counterfactual-option { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.counterfactual-result { font-size: 12px; color: var(--text-secondary); }
+.counterfactual-badge { font-family: var(--mono); font-size: 10px; padding: 2px 8px; border-radius: 3px; background: var(--accent); color: var(--bg-base); margin-left: 8px; }
+.cross-role-ref { margin-top: 6px; padding: 6px 8px; background: rgba(75,184,232,0.08); border: 1px solid rgba(75,184,232,0.3); border-radius: 4px; font-size: 11px; color: var(--info); }
+.repeat-badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: #3a3a2a; color: #c8c87e; margin-left: 4px; }
+
+/* ===== Modal ===== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
+  backdrop-filter: blur(4px);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-overlay.active { display: flex; animation: fadeIn 0.2s ease; }
+
+.modal {
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 600px;
+  width: 90%;
+  max-height: 85vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-title { font-size: 18px; font-weight: 700; }
+.modal-subtitle { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+.modal-body { padding: 20px 24px; }
+
+.modal-footer {
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+/* Decision options */
+.decision-options { display: flex; flex-direction: column; gap: 10px; }
+
+.decision-option {
+  padding: 14px 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.decision-option:hover { border-color: var(--accent-dim); background: var(--bg-hover); }
+
+.decision-option.selected {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  box-shadow: 0 0 0 1px var(--accent);
+}
+
+.decision-option-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.decision-option-title { font-weight: 600; font-size: 14px; }
+
+.decision-option-tag {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 3px;
+  background: var(--bg-base);
+  color: var(--text-muted);
+}
+
+.decision-option-desc { font-size: 12px; color: var(--text-secondary); }
+
+.decision-option-impact {
+  margin-top: 6px;
+  padding: 6px 8px;
+  background: var(--bg-base);
+  border-radius: 3px;
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Report */
+.report-section { margin-bottom: 24px; }
+
+.report-section-title {
+  font-size: 13px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--accent);
+  margin-bottom: 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border);
+}
+
+.score-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+
+.score-card {
+  padding: 12px 14px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.score-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+.score-value {
+  font-family: var(--mono);
+  font-size: 28px;
+  font-weight: 800;
+  margin: 4px 0;
+}
+
+.score-value.high { color: var(--success); }
+.score-value.mid { color: var(--accent); }
+.score-value.low { color: var(--danger); }
+
+.score-detail { font-size: 11px; color: var(--text-secondary); }
+
+.score-max { font-size: 14px; color: var(--text-muted); font-weight: 400; }
+
+/* Evidence list */
+.evidence-item {
+  display: flex;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+}
+
+.evidence-item:last-child { border-bottom: none; }
+
+.evidence-status { font-family: var(--mono); font-weight: 700; }
+.evidence-status.found { color: var(--success); }
+.evidence-status.missed { color: var(--danger); }
+
+.evidence-content { flex: 1; color: var(--text-secondary); }
+
+/* Reflection input */
+.reflection-input {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text-primary);
+  font-family: var(--sans);
+  font-size: 13px;
+  resize: vertical;
+}
+
+.reflection-input:focus {
+  outline: none;
+  border-color: var(--accent-dim);
+}
+
+/* Empty state */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 40px;
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  margin-bottom: 12px;
+  opacity: 0.3;
+}
+
+.empty-state-text { font-size: 14px; max-width: 280px; }
+
+/* Loading */
+.loading-dots {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.loading-dots span {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  animation: bounce 1.4s ease-in-out infinite;
+}
+
+.loading-dots span:nth-child(2) { animation-delay: 0.2s; }
+.loading-dots span:nth-child(3) { animation-delay: 0.4s; }
+
+@keyframes bounce {
+  0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+  40% { transform: scale(1); opacity: 1; }
+}
+
+/* Toast */
+.toast {
+  position: fixed;
+  bottom: 80px;
+  right: 24px;
+  padding: 12px 20px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  font-size: 13px;
+  z-index: 200;
+  display: none;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.toast.show { display: block; }
+.toast.success { border-color: var(--success); color: var(--success); }
+.toast.error { border-color: var(--danger); color: var(--danger); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--border-active); }
+
+/* Start screen */
+.start-screen {
+  position: fixed;
+  inset: 0;
+  background: var(--bg-base);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 300;
+  transition: opacity 0.5s ease;
+}
+
+.start-screen.hidden { opacity: 0; pointer-events: none; }
+
+.start-content {
+  text-align: center;
+  max-width: 540px;
+  padding: 40px;
+}
+
+.start-logo {
+  font-family: var(--mono);
+  font-size: 32px;
+  font-weight: 900;
+  color: var(--accent);
+  letter-spacing: -1px;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.start-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 32px;
+  line-height: 1.8;
+}
+
+.start-scenario-card {
+  padding: 20px 24px;
+  background: var(--bg-panel);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  text-align: left;
+  margin-bottom: 24px;
+}
+
+.start-scenario-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+
+.start-scenario-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+
+.start-scenario-meta {
+  display: flex;
+  gap: 20px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--mono);
+}
+
+.start-btn {
+  padding: 14px 40px;
+  font-size: 15px;
+  font-weight: 700;
+  background: var(--accent);
+  color: var(--bg-base);
+  border: none;
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.start-btn:hover {
+  background: #ffb05c;
+  box-shadow: 0 0 20px var(--accent-glow);
+  transform: translateY(-1px);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .app {
+    grid-template-columns: 220px 1fr 260px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app {
+    grid-template-columns: 1fr;
+    grid-template-areas:
+      "header"
+      "chat"
+      "footer";
+  }
+  .sidebar, .info-panel { display: none; }
+}
+
+/* ===== Print / PDF Export ===== */
+@media screen {
+  .print-only { display: none !important; }
+}
+
+@media print {
+  /* Hide all direct children of body */
+  body > * { display: none !important; }
+  body::before { display: none !important; }
+
+  /* Show only report page */
+  .report-page {
+    display: block !important;
+    position: static !important;
+    overflow: visible !important;
+    background: white !important;
+    width: 100% !important;
+    height: auto !important;
+  }
+
+  /* Print-only header */
+  .print-only { display: block !important; }
+
+  /* Reset report page layout for print */
+  .report-page-header {
+    position: static !important;
+    background: white !important;
+    border-bottom: 2px solid #333 !important;
+    padding: 0 0 12px 0 !important;
+    margin-bottom: 20px !important;
+  }
+  .report-page-title { color: #1a1a1a !important; font-size: 24px !important; }
+  .report-page-header .btn { display: none !important; }
+
+  .report-page-content {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    color: #1a1a1a !important;
+  }
+
+  /* Light theme overrides for all report content */
+  .report-page-content * {
+    color: #1a1a1a !important;
+  }
+
+  .score-hero {
+    background: #f8f8f8 !important;
+    border: 1px solid #ccc !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  .score-hero-value { color: #1a1a1a !important; }
+  .score-hero-grade { color: #555 !important; }
+
+  .score-card {
+    background: #fafafa !important;
+    border: 1px solid #ddd !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    break-inside: avoid;
+  }
+  .score-label { color: #666 !important; }
+  .score-value { color: #1a1a1a !important; }
+  .score-value.high { color: #2a9d5f !important; }
+  .score-value.mid { color: #c77a2e !important; }
+  .score-value.low { color: #c93b4a !important; }
+  .score-detail { color: #555 !important; }
+  .score-max { color: #999 !important; }
+
+  .report-section-title {
+    color: #1a1a1a !important;
+    border-bottom: 1px solid #ccc !important;
+    break-after: avoid;
+  }
+
+  .evidence-item { border-bottom: 1px solid #eee !important; }
+  .evidence-status.found { color: #2a9d5f !important; }
+  .evidence-status.missed { color: #c93b4a !important; }
+  .evidence-content { color: #333 !important; }
+  .evidence-source { color: #888 !important; }
+  .fact-id { color: #c77a2e !important; }
+
+  .suggestion-item {
+    background: #fafafa !important;
+    border: 1px solid #ddd !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    break-inside: avoid;
+  }
+  .suggestion-item.constraint { border-left: 3px solid #c93b4a !important; }
+  .suggestion-item.improvement { border-left: 3px solid #c77a2e !important; }
+  .suggestion-item.coverage { border-left: 3px solid #3a8db5 !important; }
+
+  .counterfactual-item {
+    background: #fafafa !important;
+    border: 1px solid #ddd !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    break-inside: avoid;
+  }
+  .counterfactual-item.student {
+    border-color: #c77a2e !important;
+    background: #fff8f0 !important;
+  }
+  .counterfactual-badge { background: #c77a2e !important; color: white !important; }
+  .counterfactual-option { color: #1a1a1a !important; }
+  .counterfactual-result { color: #555 !important; }
+
+  .breadcrumb-signal, .stance-conflict, .cross-role-ref, .repeat-badge { display: none !important; }
+
+  /* Page setup */
+  @page {
+    margin: 1.5cm 2cm;
+    size: A4;
+  }
+
+  /* Avoid breaking inside cards */
+  .score-card, .evidence-item, .suggestion-item, .counterfactual-item {
+    break-inside: avoid;
+  }
+}
+</style>
+</head>
+<body>
+
+<!-- Start Screen -->
+<div class="start-screen" id="startScreen">
+  <div class="start-content">
+    <div class="start-logo">CareerCraft</div>
+    <div class="start-subtitle">项目决策模拟器 · 复杂项目决策实训平台</div>
+    <div class="start-scenario-card" id="scenarioCard">
+      <div class="start-scenario-name">加载中...</div>
+      <div class="start-scenario-desc">正在获取场景信息</div>
+    </div>
+    <button class="start-btn" id="startBtn" disabled>开始模拟</button>
+  </div>
+</div>
+
+<!-- Main App -->
+<div class="app" id="app" style="display:none">
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <div class="logo">CareerCraft <span>PM Simulator</span></div>
+      <div class="scenario-tag" id="scenarioTag">上线前夜</div>
+    </div>
+    <div class="header-right">
+      <div class="timeline-item" id="phaseInterview">
+        <div class="dot"></div>
+        <span>信息收集</span>
+      </div>
+      <div class="timeline-item" id="phaseD1">
+        <div class="dot"></div>
+        <span>D1 决策</span>
+      </div>
+      <div class="timeline-item" id="phaseD2">
+        <div class="dot"></div>
+        <span>D2 决策</span>
+      </div>
+      <div class="timeline-item" id="phaseReport">
+        <div class="dot"></div>
+        <span>复盘</span>
+      </div>
+      <div class="connection-status" id="connStatus">
+        <div class="pulse"></div>
+        <span id="connText">已连接</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-title">干系人</div>
+    <div class="role-list" id="roleList"></div>
+  </aside>
+
+  <!-- Chat Area -->
+  <main class="chat-area">
+    <div class="chat-messages" id="chatMessages">
+      <div class="empty-state" id="chatEmpty">
+        <div class="empty-state-icon">💬</div>
+        <div class="empty-state-text">选择左侧干系人开始访谈，获取决策所需信息</div>
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <div class="quick-prompts" id="quickPrompts" style="display:none">
+        <div class="quick-prompt" data-prompt="缺陷的触发条件是什么？">触发条件？</div>
+        <div class="quick-prompt" data-prompt="目前修复进展怎么样？">修复进展</div>
+        <div class="quick-prompt" data-prompt="灰度方案可行吗？">灰度方案</div>
+        <div class="quick-prompt" data-prompt="如果出问题能快速回滚吗？">回滚能力</div>
+        <div class="quick-prompt" data-prompt="这次活动的商业价值有多大？">商业价值</div>
+        <div class="quick-prompt" data-prompt="如果延期24小时会怎样？">延期影响</div>
+      </div>
+      <div class="chat-input-row">
+        <textarea class="chat-input" id="chatInput" placeholder="输入提问内容... (Enter 发送, Shift+Enter 换行)" rows="1"></textarea>
+        <button class="send-btn" id="sendBtn" disabled>
+          <span>发送</span>
+        </button>
+      </div>
+    </div>
+  </main>
+
+  <!-- Info Panel -->
+  <aside class="info-panel">
+    <div class="info-title">
+      <span>已获取事实</span>
+      <span class="info-count" id="factCount">0 / 17</span>
+    </div>
+    <div class="fact-list" id="factList">
+      <div class="empty-state" style="padding: 20px; font-size: 12px;">
+        <div class="empty-state-text">访谈干系人后，获取的事实将显示在这里</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer-status">
+      <span id="phaseLabel">当前阶段：信息收集</span>
+      <div class="phase-indicator">
+        <div class="phase-dot" id="dot1"></div>
+        <div class="phase-dot" id="dot2"></div>
+        <div class="phase-dot" id="dot3"></div>
+        <div class="phase-dot" id="dot4"></div>
+      </div>
+    </div>
+    <div class="footer-actions">
+      <button class="btn btn-secondary" id="btnD1" disabled>提交 D1 决策</button>
+      <button class="btn btn-secondary" id="btnD2" disabled>提交 D2 决策</button>
+      <button class="btn btn-primary" id="btnReport" disabled>查看复盘报告</button>
+    </div>
+  </footer>
+</div>
+
+<!-- D1 Decision Modal -->
+<div class="modal-overlay" id="d1Modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">D1 · 中间决策：资源投向</div>
+      <div class="modal-subtitle">截止时间：今晚 21:30 · 选择将影响后续可用信息和方案</div>
+    </div>
+    <div class="modal-body">
+      <div class="decision-options" id="d1Options"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('d1Modal')">取消</button>
+      <button class="btn btn-primary" id="d1Confirm" disabled>确认提交</button>
+    </div>
+  </div>
+</div>
+
+<!-- D2 Decision Modal -->
+<div class="modal-overlay" id="d2Modal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">D2 · 最终决策：上线方案</div>
+      <div class="modal-subtitle">截止时间：明早 09:00 前 · 请基于已获取信息选择方案</div>
+    </div>
+    <div class="modal-body">
+      <div class="decision-options" id="d2Options"></div>
+      <div style="margin-top: 16px;">
+        <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">决策依据（选填）</div>
+        <textarea class="reflection-input" id="d2Rationale" placeholder="简述你的决策依据，引用具体事实编号..." style="min-height: 60px;"></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('d2Modal')">取消</button>
+      <button class="btn btn-primary" id="d2Confirm" disabled>确认提交</button>
+    </div>
+  </div>
+</div>
+
+<!-- Report Full Page -->
+<div class="report-page" id="reportPage">
+  <div class="report-page-header">
+    <div class="report-page-title">复盘报告</div>
+    <div style="display:flex; gap:10px;">
+      <button class="btn btn-secondary" id="btnReflection2">提交反思</button>
+      <button class="btn btn-secondary" onclick="exportReportPDF()">导出 PDF</button>
+      <button class="btn btn-secondary" onclick="closeReportPage()">返回模拟</button>
+    </div>
+  </div>
+  <div class="report-page-content" id="reportContent">
+    <div style="text-align:center; padding:60px; color: var(--text-muted);">
+      <div class="loading-dots"><span></span><span></span><span></span></div>
+      <div style="margin-top:12px">正在生成复盘报告...</div>
+    </div>
+  </div>
+</div>
+
+<!-- Reflection Modal -->
+<div class="modal-overlay" id="reflectionModal">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">成长反思</div>
+      <div class="modal-subtitle">回顾你的决策过程，什么做得好？什么可以改进？</div>
+    </div>
+    <div class="modal-body">
+      <textarea class="reflection-input" id="reflectionText" placeholder="例如：我在 D1 阶段没有追问 QA 关于触发阈值的具体数据，导致 D2 时缺乏关键证据。下次我会用结构化提问清单，确保每个红线事实都有明确的来源和验证..." style="min-height: 140px;"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('reflectionModal')">取消</button>
+      <button class="btn btn-primary" id="reflectionSubmit">提交反思并获取评分</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ Configuration ============
+const API_BASE = 'http://localhost:3000/api';
+let sessionId = null;
+let selectedRoleId = null;
+let phase = 'interview'; // interview -> d1 -> d2 -> report
+let scenarioData = null;
+let rolesData = [];
+let factsData = [];
+let stateData = null;
+let selectedD1 = null;
+let selectedD2 = null;
+
+// ============ API Helpers ============
+async function api(path, method = 'GET', body = null) {
+  const url = `${API_BASE}${path}`;
+  const opts = {
+    method,
+    headers: { 'Content-Type': 'application/json' },
+  };
+  if (body) opts.body = JSON.stringify(body);
+
+  try {
+    const res = await fetch(url, opts);
+    const json = await res.json();
+    if (!res.ok || json.status === 'error') {
+      throw new Error(json.message || `HTTP ${res.status}`);
+    }
+    return json.data;
+  } catch (err) {
+    if (err.message === 'Failed to fetch') {
+      updateConnectionStatus(false);
+      showToast('无法连接到后端服务器，请确认服务已启动', 'error');
+    }
+    throw err;
+  }
+}
+
+// ============ Initialize ============
+async function init() {
+  try {
+    // Check server health
+    const health = await api('/health');
+    updateConnectionStatus(health.llmEnabled);
+
+    // Load scenario
+    const scenario = await api('/scenario');
+    scenarioData = scenario;
+    renderScenarioCard(scenario);
+    document.getElementById('startBtn').disabled = false;
+  } catch (err) {
+    document.querySelector('.start-scenario-name').textContent = '连接失败';
+    document.querySelector('.start-scenario-desc').textContent = '请确认后端服务已启动 (npm start)';
+    document.getElementById('startBtn').textContent = '重试';
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('startBtn').onclick = () => location.reload();
+  }
+}
+
+function renderScenarioCard(scenario) {
+  const card = document.getElementById('scenarioCard');
+  card.innerHTML = `
+    <div class="start-scenario-name">${scenario.scenarioName}</div>
+    <div class="start-scenario-desc">${scenario.description}</div>
+    <div class="start-scenario-meta">
+      <span>版本 v${scenario.version}</span>
+      <span>窗口 ${scenario.timeline.simulated_window_hours}h</span>
+      <span>预算 ${scenario.timeline.real_time_budget_minutes}min</span>
+    </div>
+  `;
+}
+
+// ============ Start Session ============
+async function startSession() {
+  try {
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('startBtn').textContent = '正在初始化...';
+
+    const data = await api('/sessions', 'POST', { studentId: 'demo_user' });
+    sessionId = data.sessionId;
+    scenarioData.roles = data.roles;
+    stateData = { acquiredFacts: data.initialFacts, d1Choice: null, d2Decision: null };
+
+    // Load roles
+    await loadRoles();
+    renderRoles();
+    renderFacts();
+
+    // Show app
+    document.getElementById('startScreen').classList.add('hidden');
+    document.getElementById('app').style.display = 'grid';
+    setTimeout(() => document.getElementById('startScreen').remove(), 500);
+
+    // Add system message
+    addSystemMessage(`会话已创建 · ${data.scenarioName} · ${data.roles.length} 位干系人等待你的访谈`);
+
+    showToast('会话已启动，开始访谈吧', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('startBtn').textContent = '开始模拟';
+  }
+}
+
+// ============ Roles ============
+async function loadRoles() {
+  rolesData = await api(`/sessions/${sessionId}/roles`);
+}
+
+function renderRoles() {
+  const list = document.getElementById('roleList');
+  list.innerHTML = rolesData.map(r => {
+    const tierClass = r.currentTier || 'neutral';
+    const trustPct = Math.max(0, Math.min(100, (r.currentTrustScore !== undefined && r.currentTrustScore !== null) ? r.currentTrustScore : 50));
+    // 红绿渐变：0°=红, 60°=黄, 120°=绿，信任度越高越绿，越低越红
+    const hue = (trustPct / 100) * 120;
+    const trustColor = `hsl(${hue}, 70%, 45%)`;
+
+    return `
+      <div class="role-card" data-role="${r.id}" onclick="selectRole('${r.id}')">
+        <div class="role-header">
+          <div class="role-avatar ${r.id.toLowerCase()}">${r.name[0]}</div>
+          <div class="role-info">
+            <div class="role-name">${r.name}</div>
+            <div class="role-title">${r.title}</div>
+          </div>
+        </div>
+        <div class="trust-bar">
+          <div class="trust-track">
+            <div class="trust-fill" style="width:${trustPct}%; background:${trustColor};"></div>
+          </div>
+          <div class="trust-tier ${tierClass}">${tierLabels[tierClass] || tierClass}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+const tierLabels = {
+  '抵触': '抵触',
+  '失望': '失望',
+  '中性': '中性',
+  '配合': '配合',
+  '信任': '信任',
+  resistant: '抵触',
+  disappointed: '失望',
+  neutral: '中性',
+  cooperative: '配合',
+  trusting: '信任',
+};
+
+function selectRole(roleId) {
+  selectedRoleId = roleId;
+  document.querySelectorAll('.role-card').forEach(c => c.classList.toggle('active', c.dataset.role === roleId));
+  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('quickPrompts').style.display = 'flex';
+
+  const role = rolesData.find(r => r.id === roleId);
+  addSystemMessage(`已选择 ${role.name}（${role.title}）开始访谈`);
+}
+
+// ============ Chat ============
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg || !selectedRoleId) return;
+
+  input.value = '';
+  input.style.height = 'auto';
+  document.getElementById('sendBtn').disabled = true;
+
+  // Add user message
+  const role = rolesData.find(r => r.id === selectedRoleId);
+  addChatMessage('user', msg, 'user');
+
+  // Show loading
+  const loadingId = addLoadingMessage(selectedRoleId);
+
+  try {
+    const result = await api(`/sessions/${sessionId}/messages`, 'POST', {
+      roleId: selectedRoleId,
+      message: msg,
+    });
+
+    removeMessage(loadingId);
+
+    // Add role response
+    addChatMessage('role', result.response, selectedRoleId, {
+      actionType: result.actionType,
+      intentSource: result.intentSource,
+      disclosedFacts: result.disclosedFacts,
+      disclosureDetails: result.disclosureDetails,
+      stanceConflicts: result.stanceConflicts,
+      breadcrumbSignals: result.breadcrumbSignals,
+      crossRoleReferences: result.crossRoleReferences,
+      isRepeat: result.isRepeat,
+      isOutOfScope: result.isOutOfScope,
+      isLowTrust: result.isLowTrust,
+      conflictAcknowledged: result.conflictAcknowledged,
+    });
+
+    // Update state
+    if (result.acquiredFactsCount !== undefined) {
+      await refreshState();
+    }
+
+    // Update roles (trust levels may change)
+    await refreshRoles();
+  } catch (err) {
+    removeMessage(loadingId);
+    addSystemMessage(`消息发送失败: ${err.message}`);
+  }
+
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function addChatMessage(type, text, avatarId, meta = {}) {
+  const container = document.getElementById('chatMessages');
+  const empty = document.getElementById('chatEmpty');
+  if (empty) empty.remove();
+
+  const avatarClass = type === 'user' ? 'user' : avatarId?.toLowerCase() || 'system';
+  const avatarText = type === 'user' ? '你' : (rolesData.find(r => r.id === avatarId)?.name[0] || '?');
+
+  // Declare repeatBadge BEFORE metaHtml to avoid TDZ ReferenceError
+  const repeatBadge = meta.isRepeat ? '<span class="repeat-badge">重复提问</span>' : '';
+  const conflictAckBadge = meta.conflictAcknowledged ? '<span class="repeat-badge" style="background:#3a2a1a; color:#e8c87e;">立场调整</span>' : '';
+  const outOfScopeBadge = meta.isOutOfScope ? '<span class="repeat-badge" style="background:#3a1a1a; color:#ef4f5e;">超纲提问</span>' : '';
+  const lowTrustBadge = meta.isLowTrust ? '<span class="repeat-badge" style="background:#2a1a2a; color:#b86eff;">信任度低</span>' : '';
+
+  const metaHtml = meta.actionType ? `
+    <div class="message-meta">
+      <span>${rolesData.find(r => r.id === avatarId)?.name || ''}</span>
+      <span class="intent-tag ${meta.intentSource || 'keyword'}">${intentLabels[meta.actionType] || meta.actionType}</span>
+      <span>via ${meta.intentSource || 'keyword'}</span>
+      ${repeatBadge}
+      ${conflictAckBadge}
+      ${outOfScopeBadge}
+      ${lowTrustBadge}
+    </div>
+  ` : '';
+
+  let factHtml = '';
+  if (meta.disclosureDetails && meta.disclosureDetails.length > 0) {
+    factHtml = meta.disclosureDetails.filter(d => d.fact || d.source === 'breadcrumb_guaranteed' || d.source === 'tier_disclosure' || d.source === 'formal_inquiry').map(d => {
+      const f = d.fact;
+      if (!f) return '';
+      const isRedLine = ['F-04','F-06','F-08','F-11','F-12','F-14','F-15','F-17'].includes(f.id);
+      return `
+        <div class="fact-disclosure ${isRedLine ? 'red-line' : ''}">
+          <span class="fact-id">[${f.id}]</span> ${escapeHtml(f.content)}
+          ${isRedLine ? '<span style="color:var(--danger); margin-left:6px;">红线</span>' : ''}
+        </div>
+      `;
+    }).join('');
+  }
+
+  let breadcrumbHtml = '';
+  if (meta.breadcrumbSignals && meta.breadcrumbSignals.length > 0) {
+    breadcrumbHtml = meta.breadcrumbSignals.map(b => `
+      <div class="breadcrumb-signal">线索: ${escapeHtml(b.signal || (typeof b === 'string' ? b : ''))}</div>
+    `).join('');
+  }
+
+  let conflictHtml = '';
+  if (meta.stanceConflicts && meta.stanceConflicts.length > 0) {
+    conflictHtml = meta.stanceConflicts.map(c => `
+      <div class="stance-conflict">立场冲突: ${escapeHtml(c.factContent || c.description || JSON.stringify(c))} — 角色调整了态度</div>
+    `).join('');
+  }
+
+  let crossRoleHtml = '';
+  if (meta.crossRoleReferences && meta.crossRoleReferences.length > 0) {
+    const roleNames = { R1: '沈屹', R2: '闻笛', R3: '江照', R4: '许可' };
+    crossRoleHtml = meta.crossRoleReferences.map(r => `
+      <div class="cross-role-ref">跨角色引用: [${r.factId}] 来自 ${roleNames[r.fromRole] || r.fromRole} — 角色对此做出针对性反应</div>
+    `).join('');
+  }
+
+  const msgEl = document.createElement('div');
+  msgEl.className = `chat-message ${type}`;
+  msgEl.innerHTML = `
+    <div class="message-avatar ${avatarClass}">${avatarText}</div>
+    <div>
+      ${metaHtml}
+      <div class="message-bubble">${escapeHtml(text)}${factHtml}${breadcrumbHtml}${conflictHtml}${crossRoleHtml}</div>
+    </div>
+  `;
+  container.appendChild(msgEl);
+  container.scrollTop = container.scrollHeight;
+}
+
+function addSystemMessage(text) {
+  const container = document.getElementById('chatMessages');
+  const empty = document.getElementById('chatEmpty');
+  if (empty) empty.remove();
+
+  const msgEl = document.createElement('div');
+  msgEl.className = 'chat-message system';
+  msgEl.innerHTML = `<div class="message-bubble">${escapeHtml(text)}</div>`;
+  container.appendChild(msgEl);
+  container.scrollTop = container.scrollHeight;
+}
+
+function addLoadingMessage(roleId) {
+  const container = document.getElementById('chatMessages');
+  const id = 'loading_' + Date.now();
+  const role = rolesData.find(r => r.id === roleId);
+  const msgEl = document.createElement('div');
+  msgEl.className = 'chat-message role';
+  msgEl.id = id;
+  msgEl.innerHTML = `
+    <div class="message-avatar ${roleId.toLowerCase()}">${role?.name[0] || '?'}</div>
+    <div class="message-bubble">
+      <span style="color: var(--text-muted);">思考中</span>
+      <span class="loading-dots" style="margin-left: 4px;"><span></span><span></span><span></span></span>
+    </div>
+  `;
+  container.appendChild(msgEl);
+  container.scrollTop = container.scrollHeight;
+  return id;
+}
+
+function removeMessage(id) {
+  const el = document.getElementById(id);
+  if (el) el.remove();
+}
+
+const intentLabels = {
+  structured_questioning: '结构化提问',
+  risk_verification: '风险求证',
+  plan_negotiation: '方案协商',
+  resource_inquiry: '资源问询',
+  executive_alignment: '高层对齐',
+  one_sided_questioning: '单方追问',
+  offensive_expression: '冒犯表达',
+  ignoring_role: '忽视角色',
+  out_of_scope_questioning: '超纲提问',
+};
+
+// ============ Facts Panel ============
+async function refreshState() {
+  stateData = await api(`/sessions/${sessionId}`);
+  const facts = await api(`/sessions/${sessionId}/facts`);
+  factsData = facts;
+  renderFacts();
+
+  // Enable D1/D2 buttons based on state
+  if (stateData.d1Choice) {
+    document.getElementById('btnD1').textContent = 'D1 已提交';
+    document.getElementById('btnD1').classList.add('btn-secondary');
+    document.getElementById('btnD2').disabled = false;
+    updatePhase('d2');
+  } else {
+    document.getElementById('btnD1').disabled = false;
+  }
+
+  if (stateData.d2Decision) {
+    document.getElementById('btnD2').textContent = 'D2 已提交';
+    document.getElementById('btnReport').disabled = false;
+    updatePhase('report');
+  }
+}
+
+function renderFacts() {
+  const list = document.getElementById('factList');
+  const acquired = factsData.acquired || [];
+  const count = acquired.length;
+  const total = factsData.totalCount || 17;
+
+  document.getElementById('factCount').textContent = `${count} / ${total}`;
+
+  if (count === 0) {
+    list.innerHTML = `<div class="empty-state" style="padding: 20px; font-size: 12px;"><div class="empty-state-text">访谈干系人后，获取的事实将显示在这里</div></div>`;
+    return;
+  }
+
+  list.innerHTML = acquired.map(f => `
+    <div class="fact-card ${f.isRedLine ? 'red-line' : 'normal'}">
+      <div class="fact-card-header">
+        <span class="fact-id">${f.id}</span>
+        <span class="fact-level ${f.accessLevel || 'L1'}">${f.accessLevel || 'L1'}</span>
+        ${f.isRedLine ? '<span style="color:var(--danger); font-size:10px; font-weight:600;">红线</span>' : ''}
+      </div>
+      <div class="fact-content">${escapeHtml(f.content)}</div>
+      <div class="fact-holder">来源: ${f.holder || '未知'}</div>
+      ${f.weakSignal ? `<div class="fact-weak-signal">弱信号: ${escapeHtml(f.weakSignal)}</div>` : ''}
+    </div>
+  `).join('');
+}
+
+// ============ Roles Refresh ============
+async function refreshRoles() {
+  try {
+    rolesData = await api(`/sessions/${sessionId}/roles`);
+    renderRoles();
+    // Re-highlight selected role
+    if (selectedRoleId) {
+      document.querySelector(`.role-card[data-role="${selectedRoleId}"]`)?.classList.add('active');
+    }
+  } catch (err) { /* silent */ }
+}
+
+// ============ D1 Decision ============
+function showD1Modal() {
+  if (!scenarioData || !scenarioData.decisionNodes) return;
+  const d1 = scenarioData.decisionNodes.D1;
+  const impacts = d1.impact_on_D2;
+
+  const optionsHtml = Object.entries(impacts).map(([key, val]) => `
+    <div class="decision-option" data-choice="${key}" onclick="selectD1('${key}')">
+      <div class="decision-option-header">
+        <span class="decision-option-title">${key.replace(/_/g, ' ')}</span>
+        <span class="decision-option-tag">${val.time_cost}</span>
+      </div>
+      <div class="decision-option-desc">${val.teaching_intent}</div>
+      ${val.auto_disclose?.length ? `<div class="decision-option-impact">自动揭示: ${val.auto_disclose.join(', ')}</div>` : ''}
+      ${val.d2_options?.length ? `<div class="decision-option-impact">D2 可选: ${val.d2_options.join(', ')}</div>` : ''}
+    </div>
+  `).join('');
+
+  document.getElementById('d1Options').innerHTML = optionsHtml;
+  document.getElementById('d1Modal').classList.add('active');
+}
+
+function selectD1(choice) {
+  selectedD1 = choice;
+  document.querySelectorAll('#d1Options .decision-option').forEach(o => {
+    o.classList.toggle('selected', o.dataset.choice === choice);
+  });
+  document.getElementById('d1Confirm').disabled = false;
+}
+
+async function confirmD1() {
+  if (!selectedD1) return;
+  document.getElementById('d1Confirm').disabled = true;
+  document.getElementById('d1Confirm').textContent = '提交中...';
+
+  try {
+    const result = await api(`/sessions/${sessionId}/decisions/d1`, 'POST', { choice: selectedD1 });
+    closeModal('d1Modal');
+
+    addSystemMessage(`D1 决策已提交: ${selectedD1.replace(/_/g, ' ')}`);
+    if (result.autoDisclosedFacts?.length) {
+      addSystemMessage(`自动揭示事实: ${result.autoDisclosedFacts.join(', ')}`);
+    }
+    if (result.teachingIntent) {
+      addSystemMessage(`教学意图: ${result.teachingIntent}`);
+    }
+
+    await refreshState();
+    showToast('D1 决策已提交', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+
+  document.getElementById('d1Confirm').disabled = false;
+  document.getElementById('d1Confirm').textContent = '确认提交';
+}
+
+// ============ D2 Decision ============
+function showD2Modal() {
+  if (!scenarioData || !scenarioData.decisionNodes) return;
+  const d2 = scenarioData.decisionNodes.D2;
+  const options = d2.options || ['Go全量', 'Delay_24h', 'Limited_5%', 'Limited_20%', 'Limited_50%'];
+
+  const optionDescs = {
+    'Go全量': '全量上线新引擎，承担 QPS>2500 触发缺陷的风险',
+    'Delay_24h': '延期 24 小时上线，等待修复完成',
+    'Limited_5%': '灰度 5% 流量到新引擎，远低于触发阈值',
+    'Limited_20%': '灰度 20% 流量，接近但低于触发阈值',
+    'Limited_50%': '灰度 50% 流量，超过触发阈值，风险较高',
+  };
+
+  const optionsHtml = options.map(opt => `
+    <div class="decision-option" data-choice="${opt}" onclick="selectD2('${opt}')">
+      <div class="decision-option-header">
+        <span class="decision-option-title">${opt.replace(/_/g, ' ')}</span>
+      </div>
+      <div class="decision-option-desc">${optionDescs[opt] || opt}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('d2Options').innerHTML = optionsHtml;
+  document.getElementById('d2Modal').classList.add('active');
+}
+
+function selectD2(choice) {
+  selectedD2 = choice;
+  document.querySelectorAll('#d2Options .decision-option').forEach(o => {
+    o.classList.toggle('selected', o.dataset.choice === choice);
+  });
+  document.getElementById('d2Confirm').disabled = false;
+}
+
+async function confirmD2() {
+  if (!selectedD2) return;
+  document.getElementById('d2Confirm').disabled = true;
+  document.getElementById('d2Confirm').textContent = '提交中...';
+
+  const rationale = document.getElementById('d2Rationale').value.trim();
+
+  try {
+    const result = await api(`/sessions/${sessionId}/decisions/d2`, 'POST', {
+      decision: {
+        option: selectedD2,
+        rationale,
+      },
+    });
+
+    closeModal('d2Modal');
+    addSystemMessage(`D2 决策已提交: ${selectedD2.replace(/_/g, ' ')}`);
+
+    if (result.constraintResults?.violated?.length > 0) {
+      addSystemMessage(`约束违反: ${result.constraintResults.violated.map(c => c.constraint).join(', ')}`);
+    }
+
+    await refreshState();
+    showToast('D2 决策已提交', 'success');
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+
+  document.getElementById('d2Confirm').disabled = false;
+  document.getElementById('d2Confirm').textContent = '确认提交';
+}
+
+// ============ Report ============
+async function showReport() {
+  document.getElementById('reportPage').classList.add('active');
+  document.getElementById('reportContent').innerHTML = '<div style="text-align:center; padding:60px; color: var(--text-muted);"><div class="loading-dots"><span></span><span></span><span></span></div><div style="margin-top:12px">正在生成复盘报告...</div></div>';
+
+  try {
+    const report = await api(`/sessions/${sessionId}/report`);
+    renderReport(report);
+  } catch (err) {
+    document.getElementById('reportContent').innerHTML = `<div style="padding:40px; text-align:center; color:var(--danger);">${err.message}</div>`;
+  }
+}
+
+function closeReportPage() {
+  document.getElementById('reportPage').classList.remove('active');
+}
+
+function exportReportPDF() {
+  // Ensure report page is visible before printing
+  const reportPage = document.getElementById('reportPage');
+  if (!reportPage.classList.contains('active')) {
+    showToast('请先生成复盘报告', 'error');
+    return;
+  }
+
+  // Check if report has actual content (not loading state)
+  const content = document.getElementById('reportContent');
+  if (content.querySelector('.loading-dots')) {
+    showToast('报告正在生成中，请稍候', 'error');
+    return;
+  }
+
+  // Add print-only header with metadata
+  let printHeader = document.getElementById('printHeader');
+  if (!printHeader) {
+    printHeader = document.createElement('div');
+    printHeader.id = 'printHeader';
+    printHeader.className = 'print-only';
+    printHeader.style.cssText = 'margin-bottom: 20px; padding-bottom: 12px; border-bottom: 2px solid #333;';
+    reportPage.insertBefore(printHeader, reportPage.querySelector('.report-page-content'));
+  }
+
+  const now = new Date();
+  const dateStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const scenarioName = scenarioData ? scenarioData.scenarioName : 'CareerCraft 模拟';
+  const studentDecisions = stateData || {};
+  const d1Text = studentDecisions.d1Choice ? studentDecisions.d1Choice.replace(/_/g, ' ') : '未提交';
+  const d2Text = studentDecisions.d2Decision
+    ? (typeof studentDecisions.d2Decision === 'object'
+        ? (studentDecisions.d2Decision.option || JSON.stringify(studentDecisions.d2Decision))
+        : studentDecisions.d2Decision)
+    : '未提交';
+
+  printHeader.innerHTML = `
+    <div style="font-size: 14px; color: #888; margin-bottom: 4px;">CareerCraft 项目决策模拟器</div>
+    <div style="font-size: 20px; font-weight: 700; color: #1a1a1a; margin-bottom: 8px;">${scenarioName} · 复盘报告</div>
+    <div style="display: flex; gap: 24px; font-size: 12px; color: #666;">
+      <span>导出时间：${dateStr}</span>
+      <span>D1 决策：${d1Text}</span>
+      <span>D2 决策：${d2Text}</span>
+      <span>已获取事实：${(stateData?.acquiredFacts || []).length} 条</span>
+    </div>
+  `;
+
+  // Trigger print (browser print dialog includes "Save as PDF" option)
+  document.body.classList.add('printing');
+  window.print();
+  // Clean up after print dialog closes
+  setTimeout(() => {
+    document.body.classList.remove('printing');
+  }, 1000);
+}
+
+function renderReport(report) {
+  const scoring = report.scoring || {};
+  const totalScore = scoring.totalScore || 0;
+  const scoreClass = totalScore >= 70 ? 'high' : totalScore >= 50 ? 'mid' : 'low';
+
+  // Dimensions is an OBJECT keyed by dimension name, not an array
+  const dims = scoring.dimensions || {};
+  const dimLabels = {
+    user_insight: '用户洞察',
+    decision_quality: '决策质量',
+    communication: '沟通能力',
+    business_balance: '商业平衡',
+    growth_reflection: '成长反思',
+  };
+
+  const scoreGrid = Object.entries(dims).map(([key, d]) => {
+    const pct = d.percentage || 0;
+    const cls = pct >= 70 ? 'high' : pct >= 50 ? 'mid' : 'low';
+    const detailText = d.details && d.details[0]
+      ? (d.details[0].item || d.details[0].desc || d.details[0].fact || '')
+      : (d.pendingLLM ? '待 LLM 评分' : '');
+    return `
+      <div class="score-card">
+        <div class="score-label">${dimLabels[key] || key}</div>
+        <div class="score-value ${cls}">${d.score}<span class="score-max">/${d.maxScore}</span></div>
+        <div class="score-detail">${pct}% · ${d.engine || ''}${d.pendingLLM ? ' (待LLM)' : ''}</div>
+        <div class="score-detail">${escapeHtml(detailText)}</div>
+      </div>
+    `;
+  }).join('');
+
+  // Evidence chain
+  const allFacts = (report.studentDecisions && report.studentDecisions.acquiredFacts) || [];
+  const evidenceChain = (report.evidenceChain || []).map(e => {
+    const isMissed = !allFacts.includes(e.factId);
+    return `
+      <div class="evidence-item">
+        <span class="evidence-status ${isMissed ? 'missed' : 'found'}">${isMissed ? '✗' : '✓'}</span>
+        <span class="fact-id" style="margin-right:6px; color:var(--accent);">${e.factId || ''}</span>
+        <div class="evidence-content">
+          ${escapeHtml(e.content || '')}
+          <div class="evidence-source">来源: ${escapeHtml(e.source || '')} · 持有者: ${e.holder || ''} ${e.teachingPoint ? '· 教学点: ' + escapeHtml(e.teachingPoint) : ''}</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  // Missed red-line facts
+  const scenarioFacts = scenarioData && scenarioData.facts ? scenarioData.facts : [];
+  const missedRedLines = scenarioFacts.filter(f => f.red_line && !allFacts.includes(f.id));
+  const missedHtml = missedRedLines.length > 0 ? `
+    <div class="report-section">
+      <div class="report-section-title">遗漏的红线事实</div>
+      ${missedRedLines.map(f => `
+        <div class="evidence-item">
+          <span class="evidence-status missed">✗</span>
+          <span class="fact-id" style="color:var(--danger);">${f.id}</span>
+          <div class="evidence-content">${escapeHtml(f.content)} (持有者: ${f.holder})</div>
+        </div>
+      `).join('')}
+    </div>
+  ` : '';
+
+  // Improvement suggestions
+  const suggestions = (report.improvementSuggestions || report.suggestions || []).map(s => {
+    const text = typeof s === 'string' ? s : (s.text || JSON.stringify(s));
+    const cls = text.includes('约束') ? 'constraint' : text.includes('覆盖') || text.includes('关系') ? 'coverage' : 'improvement';
+    return `<div class="suggestion-item ${cls}">${escapeHtml(text)}</div>`;
+  }).join('');
+
+  // Counterfactual
+  const counterfactual = (report.counterfactual || []).map(cf => `
+    <div class="counterfactual-item ${cf.isStudentChoice ? 'student' : ''}">
+      <div class="counterfactual-option">
+        ${escapeHtml(cf.option || '')}
+        ${cf.isStudentChoice ? '<span class="counterfactual-badge">你的选择</span>' : ''}
+      </div>
+      <div class="counterfactual-result">${escapeHtml(cf.condition || '')} → ${escapeHtml(cf.result || '')}</div>
+    </div>
+  `).join('');
+
+  // Interview summary
+  const interviewLog = report.interviewLog || [];
+  const rolesInterviewed = [...new Set(interviewLog.map(e => e.roleId))];
+  const roleNames = { R1: '沈屹', R2: '闻笛', R3: '江照', R4: '许可' };
+
+  document.getElementById('reportContent').innerHTML = `
+    <!-- Score Hero -->
+    <div class="score-hero">
+      <div class="score-label">综合评分</div>
+      <div class="score-hero-value ${scoreClass}">${totalScore}<span class="score-max" style="font-size:24px;">/100</span></div>
+      <div class="score-hero-grade">${scoring.grade || ''} · 五维加权</div>
+    </div>
+
+    ${scoreGrid ? `
+    <div class="report-section">
+      <div class="report-section-title">评分维度</div>
+      <div class="score-grid">${scoreGrid}</div>
+    </div>
+    ` : ''}
+
+    <div class="report-section">
+      <div class="report-section-title">决策概要</div>
+      <div style="display:grid; grid-template-columns: repeat(2, 1fr); gap:12px;">
+        <div class="score-card">
+          <div class="score-label">D1 决策</div>
+          <div style="font-size:16px; font-weight:600; margin-top:4px;">${escapeHtml((report.studentDecisions && report.studentDecisions.d1Choice) || '未决策')}</div>
+        </div>
+        <div class="score-card">
+          <div class="score-label">D2 决策</div>
+          <div style="font-size:16px; font-weight:600; margin-top:4px;">${escapeHtml(typeof (report.studentDecisions && report.studentDecisions.d2Decision) === 'object' ? JSON.stringify(report.studentDecisions.d2Decision) : (report.studentDecisions && report.studentDecisions.d2Decision) || '未决策')}</div>
+        </div>
+        <div class="score-card">
+          <div class="score-label">已获取事实</div>
+          <div style="font-size:16px; font-weight:600; margin-top:4px;">${allFacts.length} / ${scenarioFacts.length || 17}</div>
+        </div>
+        <div class="score-card">
+          <div class="score-label">访谈覆盖</div>
+          <div style="font-size:16px; font-weight:600; margin-top:4px;">${rolesInterviewed.length} / 4 角色 · ${interviewLog.length} 轮</div>
+          <div class="score-detail">${rolesInterviewed.map(r => roleNames[r] || r).join('、')}</div>
+        </div>
+      </div>
+    </div>
+
+    ${evidenceChain ? `
+    <div class="report-section">
+      <div class="report-section-title">证据链分析</div>
+      ${evidenceChain}
+    </div>
+    ` : ''}
+
+    ${missedHtml}
+
+    ${suggestions ? `
+    <div class="report-section">
+      <div class="report-section-title">改进建议</div>
+      ${suggestions}
+    </div>
+    ` : ''}
+
+    ${counterfactual ? `
+    <div class="report-section">
+      <div class="report-section-title">反事实分析 · 不同选择的结果</div>
+      ${counterfactual}
+    </div>
+    ` : ''}
+
+    ${report.constraintResults ? `
+    <div class="report-section">
+      <div class="report-section-title">约束检查</div>
+      <div class="score-card">
+        <div class="score-label">状态</div>
+        <div style="margin-top:4px;">${report.constraintResults.all_passed ? '<span style="color:var(--success);">✓ 全部通过</span>' : '<span style="color:var(--danger);">✗ 违反 ' + (report.constraintResults.violated_count || 0) + ' 条约束</span>'}</div>
+        ${report.constraintResults.violated ? report.constraintResults.violated.map(v => `<div class="score-detail" style="margin-top:4px;">${escapeHtml(v.id || v.constraint || '')}: ${escapeHtml(v.detail || '')}</div>`).join('') : ''}
+      </div>
+    </div>
+    ` : ''}
+  `;
+}
+
+// ============ Reflection ============
+async function submitReflection() {
+  const text = document.getElementById('reflectionText').value.trim();
+  if (!text) {
+    showToast('请输入反思内容', 'error');
+    return;
+  }
+
+  document.getElementById('reflectionSubmit').disabled = true;
+  document.getElementById('reflectionSubmit').textContent = '提交中...';
+
+  try {
+    // Try auto-score first, fallback to manual
+    try {
+      const result = await api(`/sessions/${sessionId}/llm-scores`, 'POST', {
+        reflectionText: text,
+        autoScore: true,
+      });
+
+      closeModal('reflectionModal');
+      showToast(`反思评分: 决策${result.llmDecisionScore || 'N/A'}分, 反思${result.llmReflectionScore || 'N/A'}分`, 'success');
+
+      if (result.reflectionFeedback) {
+        addSystemMessage(`LLM 反思反馈: ${result.reflectionFeedback.overallFeedback || ''}`);
+      }
+    } catch (autoErr) {
+      // Fallback: manual injection
+      await api(`/sessions/${sessionId}/llm-scores`, 'POST', {
+        reflectionText: text,
+        llmReflectionScore: 70,
+      });
+      closeModal('reflectionModal');
+      showToast('反思已提交（规则评分）', 'success');
+    }
+
+    // Refresh report
+    showReport();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+
+  document.getElementById('reflectionSubmit').disabled = false;
+  document.getElementById('reflectionSubmit').textContent = '提交反思并获取评分';
+}
+
+// ============ Utils ============
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+function showToast(msg, type = '') {
+  const toast = document.getElementById('toast');
+  toast.textContent = msg;
+  toast.className = `toast show ${type}`;
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function closeModal(id) {
+  document.getElementById(id).classList.remove('active');
+}
+
+function updateConnectionStatus(connected) {
+  const el = document.getElementById('connStatus');
+  if (!el) return;
+  el.classList.toggle('disconnected', !connected);
+  document.getElementById('connText').textContent = connected ? '已连接' : '未连接';
+}
+
+function updatePhase(p) {
+  phase = p;
+  const phases = ['interview', 'd1', 'd2', 'report'];
+  const idx = phases.indexOf(p);
+  const labels = { interview: '信息收集', d1: 'D1 决策', d2: 'D2 决策', report: '复盘' };
+
+  document.getElementById('phaseLabel').textContent = `当前阶段：${labels[p]}`;
+
+  for (let i = 0; i < 4; i++) {
+    const dot = document.getElementById(`dot${i + 1}`);
+    dot.classList.remove('active', 'done');
+    if (i < idx) dot.classList.add('done');
+    else if (i === idx) dot.classList.add('active');
+  }
+
+  const items = ['phaseInterview', 'phaseD1', 'phaseD2', 'phaseReport'];
+  items.forEach((id, i) => {
+    const el = document.getElementById(id);
+    el.classList.remove('active', 'done');
+    if (i < idx) el.classList.add('done');
+    else if (i === idx) el.classList.add('active');
+  });
+}
+
+// ============ Event Bindings ============
+document.getElementById('startBtn').addEventListener('click', startSession);
+
+document.getElementById('sendBtn').addEventListener('click', sendMessage);
+
+document.getElementById('chatInput').addEventListener('keydown', (e) => {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+});
+
+document.getElementById('chatInput').addEventListener('input', function() {
+  this.style.height = 'auto';
+  this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+});
+
+document.querySelectorAll('.quick-prompt').forEach(p => {
+  p.addEventListener('click', () => {
+    document.getElementById('chatInput').value = p.dataset.prompt;
+    document.getElementById('chatInput').focus();
+  });
+});
+
+document.getElementById('btnD1').addEventListener('click', showD1Modal);
+document.getElementById('btnD2').addEventListener('click', showD2Modal);
+document.getElementById('btnReport').addEventListener('click', showReport);
+document.getElementById('btnReflection2').addEventListener('click', () => {
+  document.getElementById('reflectionModal').classList.add('active');
+});
+
+document.getElementById('d1Confirm').addEventListener('click', confirmD1);
+document.getElementById('d2Confirm').addEventListener('click', confirmD2);
+document.getElementById('reflectionSubmit').addEventListener('click', submitReflection);
+
+// Close modal on overlay click
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.addEventListener('click', (e) => {
+    if (e.target === o) o.classList.remove('active');
+  });
+});
+
+// Init
+init();
+</script>
+</body>
+</html>

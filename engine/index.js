@@ -78,6 +78,12 @@ function createEngine(options) {
     // 已展示的弱信号 factId 集合（避免重复展示）
     shownWeakSignals: new Set(),
 
+    // 对话历史（按角色分组）：每个角色记录被问过的问题和披露的事实
+    roleConversationHistory: {}, // { R1: [{ message, actionType, disclosedFacts, topics, timestamp }], ... }
+
+    // 已承认的冲突（避免重复承认）
+    acknowledgedConflicts: new Set(),
+
     // 引擎实例
     stateEngine: null,
     relationshipEngine: null,
@@ -100,6 +106,10 @@ function createEngine(options) {
     session.interviewLog = [];
     session.crossValidationCount = 0;
     session.shownWeakSignals = new Set();
+    // 对话历史
+    session.roleConversationHistory = {};
+    // 已承认的冲突
+    session.acknowledgedConflicts = new Set();
     // 面包屑追踪：factId → 当前轮次（0=未开始，1=已展示第1级，2=已展示第2级）
     session.breadcrumbProgress = {};
     // 已通过面包屑保证披露的事实
@@ -157,6 +167,17 @@ function createEngine(options) {
       });
     } else {
       actionType = relEngine.inferActionType(studentMessage);
+    }
+
+    // 1b. 超纲提问检测：如果学生向当前角色提出了不属于其领域的问题，覆盖动作类型
+    const outOfScopeInfo = relEngine.detectOutOfScope(roleId, studentMessage);
+    let isOutOfScope = false;
+    if (outOfScopeInfo.isOutOfScope) {
+      // 超纲提问不覆盖冒犯性表达（冒犯更严重）
+      if (actionType !== 'offensive_expression') {
+        actionType = 'out_of_scope_questioning';
+        isOutOfScope = true;
+      }
     }
 
     // 2. 关系更新：根据动作类型更新信任度
@@ -302,8 +323,14 @@ function createEngine(options) {
     // 简化逻辑：如果学生在不同角色的对话中提到了同一事实
     checkCrossValidation(roleId, disclosedFacts);
 
-    // 5. 记录访谈日志
-    session.interviewLog.push({
+    // 4b. 检测跨角色事实引用：学生是否在消息中提及了从其他角色获取的事实
+    const crossRoleRefs = detectCrossRoleReferences(roleId, studentMessage);
+
+    // 5b. 检测重复提问：必须在更新对话历史之前检测
+    const repeatInfo = detectRepeatQuestion(roleId, studentMessage, actionType, disclosedFacts);
+
+    // 5. 记录访谈日志和对话历史
+    const logEntry = {
       timestamp: new Date().toISOString(),
       roleId,
       studentMessage,
@@ -311,6 +338,30 @@ function createEngine(options) {
       trustChange,
       disclosedFacts: disclosedFacts.slice(),
       formalInquiryMatched: formalInquiry.matchedRules,
+    };
+    session.interviewLog.push(logEntry);
+
+    // 更新角色对话历史
+    if (!session.roleConversationHistory[roleId]) {
+      session.roleConversationHistory[roleId] = [];
+    }
+    const topicsCovered = disclosedFacts.slice();
+    // 也记录消息涉及的话题关键词（从已讨论的事实中提取）
+    for (const factId of session.acquiredFacts) {
+      const fact = getFactDef(factId);
+      if (fact && fact.holder === roleId) {
+        const kws = extractFactKeywords(fact);
+        if (kws.some(kw => studentMessage.indexOf(kw) >= 0)) {
+          if (topicsCovered.indexOf(factId) < 0) topicsCovered.push(factId);
+        }
+      }
+    }
+    session.roleConversationHistory[roleId].push({
+      message: studentMessage,
+      actionType,
+      disclosedFacts: disclosedFacts.slice(),
+      topics: topicsCovered,
+      timestamp: logEntry.timestamp,
     });
 
     // 6. 构造角色回复
@@ -322,8 +373,6 @@ function createEngine(options) {
     let conflictPrefix = '';
     const newConflicts = [];
     if (stanceConflicts.length > 0) {
-      // 每个冲突只承认一次
-      session.acknowledgedConflicts = session.acknowledgedConflicts || new Set();
       for (const sc of stanceConflicts) {
         const key = `${roleId}:${sc.factId}`;
         if (!session.acknowledgedConflicts.has(key)) {
@@ -336,6 +385,172 @@ function createEngine(options) {
       }
     }
 
+    // 6a-2. 低信任态度判断：使用动作前的信任值（否则第一次超纲扣分后就会触发低信任）
+    const trustBeforeAction = trustChange.oldValue;
+    const isLowTrust = trustBeforeAction < 50;
+    const isResistant = trustBeforeAction < 30; // 抵触档：更严重的低信任
+    const roleDef = ROLES.find((r) => r.id === roleId);
+    const lowTrustResponses = roleDef && roleDef.low_trust_responses ? roleDef.low_trust_responses : null;
+
+    /**
+     * 根据场景选择低信任前缀/回复
+     * @param {string} scene - 场景: default|out_of_scope|repeat|breadcrumb|weak_signal|no_info|cross_role
+     * @returns {string} 低信任前缀文本（空字符串如果无配置）
+     */
+    function getLowTrustPrefix(scene) {
+      if (!isLowTrust || !lowTrustResponses) return '';
+      // 抵触档优先使用 resistant_ 前缀
+      if (isResistant) {
+        const resistantKey = `resistant_${scene}`;
+        if (lowTrustResponses[resistantKey]) return lowTrustResponses[resistantKey];
+        if (lowTrustResponses.resistant_default) return lowTrustResponses.resistant_default;
+      }
+      // 中性低档使用场景专属前缀
+      if (lowTrustResponses[scene]) return lowTrustResponses[scene];
+      return lowTrustResponses.default || '';
+    }
+
+    // 6a-3. 优先级 0：超纲提问 → 直接返回超纲回复（不进入正常披露流程）
+    if (isOutOfScope && !crossRoleRefs.length) {
+      let oosResponse;
+      if (isLowTrust) {
+        // 低信任 + 超纲：使用场景专属超纲回复
+        oosResponse = getLowTrustPrefix('out_of_scope') || roleDef.out_of_scope_response || '这个问题不在我的职责范围内';
+      } else if (roleDef.out_of_scope_response) {
+        oosResponse = roleDef.out_of_scope_response;
+      } else {
+        oosResponse = '这个问题不在我的职责范围内，你可以去问问对应的人';
+      }
+
+      response = `${role.name}：${oosResponse}`;
+
+      return {
+        actionType,
+        trustChange,
+        disclosedFacts: [],
+        disclosureDetails: [],
+        formalInquiry: { matchedRules: [], canDiscloseFacts: [], details: [] },
+        response,
+        acquiredFactsCount: session.acquiredFacts.length,
+        stanceConflicts: newConflicts,
+        conflictAcknowledged: false,
+        breadcrumbSignals: [],
+        breadcrumbProgress: Object.assign({}, session.breadcrumbProgress),
+        crossRoleReferences: crossRoleRefs,
+        isRepeat: false,
+        isOutOfScope: true,
+        outOfScopeMatchedRole: outOfScopeInfo.matchedRole,
+        isLowTrust,
+        isResistant,
+      };
+    }
+
+    // 6b. 优先级 1：跨角色事实引用 → 角色做出针对性反应
+    if (crossRoleRefs.length > 0 && !repeatInfo.isRepeat) {
+      const roleDef = ROLES.find((r) => r.id === roleId);
+      const reactions = crossRoleRefs
+        .map((ref) => {
+          if (roleDef.cross_role_reactions && roleDef.cross_role_reactions[ref.factId]) {
+            return roleDef.cross_role_reactions[ref.factId];
+          }
+          return null;
+        })
+        .filter(Boolean);
+
+      if (reactions.length > 0) {
+        // 低信任跨角色前缀
+        const crossRolePrefix = getLowTrustPrefix('cross_role');
+        // 如果同时有新披露的事实，先说事实再说跨角色反应
+        if (disclosedFacts.length > 0) {
+          const factContents = disclosedFacts.map((fid) => {
+            const f = getFactDef(fid);
+            let line = f ? `[${fid}] ${f.content}` : fid;
+            const stance = relEngine.getStanceReaction(roleId, fid);
+            if (stance) line += `（${stance}）`;
+            return line;
+          });
+          response = `${role.name}：${conflictPrefix ? conflictPrefix + ' ' : ''}${crossRolePrefix ? crossRolePrefix + ' ' : ''}${factContents.join('；')}。${reactions[0]}`;
+        } else {
+          response = `${role.name}：${conflictPrefix ? conflictPrefix + ' ' : ''}${crossRolePrefix ? crossRolePrefix + ' ' : ''}${reactions.join(' ')}`;
+        }
+
+        // 记录跨角色引用为交叉验证
+        for (const ref of crossRoleRefs) {
+          if (ref.factId !== roleId) {
+            session.crossValidationCount += 1;
+          }
+        }
+
+        return {
+          actionType,
+          trustChange,
+          disclosedFacts,
+          disclosureDetails,
+          formalInquiry,
+          response,
+          acquiredFactsCount: session.acquiredFacts.length,
+          stanceConflicts: newConflicts,
+          conflictAcknowledged: conflictPrefix.length > 0,
+          breadcrumbSignals,
+          breadcrumbProgress: Object.assign({}, session.breadcrumbProgress),
+          crossRoleReferences: crossRoleRefs,
+          isRepeat: false,
+        };
+      }
+    }
+
+    // 6c. 优先级 2：重复提问 → 使用 repeat_responses
+    if (repeatInfo.isRepeat && disclosedFacts.length === 0) {
+      const roleDef = ROLES.find((r) => r.id === roleId);
+      let repeatResponse = null;
+
+      if (roleDef.repeat_responses) {
+        // 如果能匹配到具体事实的重复响应
+        if (repeatInfo.relatedFactId && roleDef.repeat_responses[repeatInfo.relatedFactId]) {
+          repeatResponse = roleDef.repeat_responses[repeatInfo.relatedFactId];
+        }
+        // 否则使用默认重复响应
+        if (!repeatResponse && roleDef.repeat_responses.default) {
+          repeatResponse = roleDef.repeat_responses.default;
+        }
+      }
+
+      if (repeatResponse) {
+        // 低信任重复提问前缀
+        const repeatPrefix = getLowTrustPrefix('repeat');
+        response = `${role.name}：${conflictPrefix ? conflictPrefix + ' ' : ''}${repeatPrefix ? repeatPrefix + ' ' : ''}${repeatResponse}`;
+        return {
+          actionType,
+          trustChange,
+          disclosedFacts,
+          disclosureDetails,
+          formalInquiry,
+          response,
+          acquiredFactsCount: session.acquiredFacts.length,
+          stanceConflicts: newConflicts,
+          conflictAcknowledged: conflictPrefix.length > 0,
+          breadcrumbSignals,
+          breadcrumbProgress: Object.assign({}, session.breadcrumbProgress),
+          crossRoleReferences: crossRoleRefs,
+          isRepeat: true,
+          repeatTarget: repeatInfo.relatedFactId,
+        };
+      }
+    }
+
+    // 6d. 优先级 3：正常事实披露响应（原有逻辑）
+    // 低信任态度前缀：按场景选择不同前缀
+    let lowTrustPrefix = '';
+    if (isLowTrust) {
+      if (disclosedFacts.length > 0) {
+        // 有事实披露 → 使用默认低信任前缀
+        lowTrustPrefix = getLowTrustPrefix('default');
+      } else if (breadcrumbSignals.length > 0) {
+        // 只有面包屑 → 面包屑场景
+        lowTrustPrefix = getLowTrustPrefix('breadcrumb');
+      }
+    }
+
     if (disclosedFacts.length > 0) {
       const factContents = disclosedFacts.map((fid) => {
         const f = getFactDef(fid);
@@ -345,11 +560,11 @@ function createEngine(options) {
         if (stance) line += `（${stance}）`;
         return line;
       });
-      response = `${role ? role.name : roleId}：${conflictPrefix ? conflictPrefix + ' ' : ''}${factContents.join('；')}`;
+      response = `${role ? role.name : roleId}：${conflictPrefix ? conflictPrefix + ' ' : ''}${lowTrustPrefix ? lowTrustPrefix + ' ' : ''}${factContents.join('；')}`;
     } else if (breadcrumbSignals.length > 0) {
       // 优先展示面包屑信号（比弱信号更具体）
       const bc = breadcrumbSignals[0];
-      response = `${role ? role.name : roleId}：${conflictPrefix ? conflictPrefix + ' ' : ''}（线索）${bc.signal}`;
+      response = `${role ? role.name : roleId}：${conflictPrefix ? conflictPrefix + ' ' : ''}${lowTrustPrefix ? lowTrustPrefix + ' ' : ''}（线索）${bc.signal}`;
     } else {
       // 未披露新事实时，给出弱信号提示
       // 仅展示：有弱信号 + 学生尚未获取该事实 + 本轮尚未展示过
@@ -364,10 +579,17 @@ function createEngine(options) {
         const signalFact = freshSignal || weakSignalFacts[0];
         const ws = signalFact.weak_signal;
         session.shownWeakSignals.add(signalFact.id);
-        response = `${role ? role.name : roleId}：${conflictPrefix ? conflictPrefix + ' ' : ''}（弱信号）${ws}`;
+        // 低信任弱信号前缀
+        const weakPrefix = getLowTrustPrefix('weak_signal');
+        response = `${role ? role.name : roleId}：${conflictPrefix ? conflictPrefix + ' ' : ''}${weakPrefix ? weakPrefix + ' ' : ''}（弱信号）${ws}`;
       } else if (conflictPrefix) {
         // 没有新事实但有冲突承认
         response = `${role ? role.name : roleId}：${conflictPrefix}`;
+      } else if (isLowTrust) {
+        // 低信任 + 无新信息：场景专属无信息回复
+        const noInfoPrefix = getLowTrustPrefix('no_info');
+        const noInfoFallback = isResistant ? '我没什么好说的。' : '我目前没有更多信息可以提供。';
+        response = `${role ? role.name : roleId}：${noInfoPrefix || noInfoFallback}`;
       } else {
         response = `${role ? role.name : roleId}：我目前没有更多信息可以提供。`;
       }
@@ -387,7 +609,125 @@ function createEngine(options) {
       // 面包屑信息
       breadcrumbSignals,
       breadcrumbProgress: Object.assign({}, session.breadcrumbProgress),
+      // 跨角色引用信息
+      crossRoleReferences: crossRoleRefs,
+      // 重复提问信息
+      isRepeat: repeatInfo.isRepeat,
+      // 超纲提问信息
+      isOutOfScope: false,
+      outOfScopeMatchedRole: null,
+      // 低信任信息
+      isLowTrust,
+      isResistant,
     };
+  }
+
+  /**
+   * 检测跨角色事实引用：学生消息中是否提及了从其他角色获取的事实
+   * @param {string} currentRoleId - 当前对话角色 ID
+   * @param {string} studentMessage - 学生消息
+   * @returns {object[]} 跨角色引用列表 { factId, factContent, fromRole, matchedKeyword }
+   */
+  function detectCrossRoleReferences(currentRoleId, studentMessage) {
+    const refs = [];
+    const msg = studentMessage.toLowerCase();
+
+    for (const factId of session.acquiredFacts) {
+      const fact = getFactDef(factId);
+      if (!fact) continue;
+      // 只检测来自其他角色的事实
+      if (fact.holder === currentRoleId || fact.holder === 'ALL') continue;
+      // 初始可见的事实不算跨角色引用
+      if (fact.access_level === 'L0' || fact.disclosure_condition === 'initial_visible') continue;
+
+      // 检查学生消息是否提及该事实的关键词
+      const keywords = extractFactKeywords(fact);
+      const matchedKeyword = keywords.find((kw) => msg.indexOf(kw.toLowerCase()) >= 0);
+
+      if (matchedKeyword) {
+        refs.push({
+          factId,
+          factContent: fact.content,
+          fromRole: fact.holder,
+          matchedKeyword,
+        });
+      }
+    }
+
+    return refs;
+  }
+
+  /**
+   * 检测重复提问：当前消息是否与之前问过同一角色的问题类似
+   * @param {string} roleId - 当前角色 ID
+   * @param {string} message - 学生消息
+   * @param {string} actionType - 当前意图类型
+   * @param {string[]} disclosedFacts - 本轮新披露的事实
+   * @returns {{isRepeat:boolean, relatedFactId:string|null, previousMessage:string|null}}
+   */
+  function detectRepeatQuestion(roleId, message, actionType, disclosedFacts) {
+    const history = session.roleConversationHistory[roleId];
+    if (!history || history.length === 0) {
+      return { isRepeat: false, relatedFactId: null, previousMessage: null };
+    }
+
+    // 如果本轮有新事实披露，不算重复
+    if (disclosedFacts && disclosedFacts.length > 0) {
+      return { isRepeat: false, relatedFactId: null, previousMessage: null };
+    }
+
+    const msg = message.toLowerCase();
+
+    // 检查是否与历史消息在话题上重叠
+    for (const entry of history) {
+      // 如果之前的问题也披露了事实，且当前消息涉及相同话题
+      if (entry.topics && entry.topics.length > 0) {
+        for (const topicFactId of entry.topics) {
+          const fact = getFactDef(topicFactId);
+          if (!fact) continue;
+
+          // 检查当前消息是否涉及该话题的关键词
+          const keywords = extractFactKeywords(fact);
+          const matched = keywords.some((kw) => msg.indexOf(kw.toLowerCase()) >= 0);
+
+          if (matched) {
+            return {
+              isRepeat: true,
+              relatedFactId: topicFactId,
+              previousMessage: entry.message,
+            };
+          }
+        }
+      }
+
+      // 完全相同的消息
+      if (entry.message.toLowerCase() === msg) {
+        return {
+          isRepeat: true,
+          relatedFactId: null,
+          previousMessage: entry.message,
+        };
+      }
+
+      // 相同的意图类型 + 消息相似度高（简单：共享 2+ 个关键词）
+      if (entry.actionType === actionType && entry.message.length > 0) {
+        const prevWords = new Set(entry.message.split(/\s+/));
+        const currWords = new Set(message.split(/\s+/));
+        let overlap = 0;
+        for (const w of currWords) {
+          if (w.length >= 2 && prevWords.has(w)) overlap++;
+        }
+        if (overlap >= 2) {
+          return {
+            isRepeat: true,
+            relatedFactId: null,
+            previousMessage: entry.message,
+          };
+        }
+      }
+    }
+
+    return { isRepeat: false, relatedFactId: null, previousMessage: null };
   }
 
   /**
@@ -399,14 +739,18 @@ function createEngine(options) {
     const keywords = [];
     // 从事实 content 中提取关键词
     if (fact.content) {
-      // 取内容中较独特的词组（简化：取前 4 字）
       const c = fact.content;
-      // 按标点分割
-      const segments = c.split(/[，。、；,.;]/);
+      // 按标点和空格分割
+      const segments = c.split(/[，。、；,.;：:\s]+/);
       for (const seg of segments) {
         const trimmed = seg.trim();
         if (trimmed.length >= 2 && trimmed.length <= 8) {
           keywords.push(trimmed);
+        }
+        // 对长度 >= 3 的段，提取前 2-3 字作为短关键词
+        if (trimmed.length >= 3) {
+          keywords.push(trimmed.substring(0, 2));
+          if (trimmed.length >= 4) keywords.push(trimmed.substring(0, 3));
         }
       }
     }
@@ -416,7 +760,15 @@ function createEngine(options) {
     }
     // 从事实 id 中提取
     keywords.push(fact.id);
-    return keywords;
+    // 如果有 teaching_point，也提取关键词
+    if (fact.teaching_point) {
+      const tpSegs = fact.teaching_point.split(/[，。、；,.;：:\s]+/);
+      for (const seg of tpSegs) {
+        if (seg.length >= 2 && seg.length <= 6) keywords.push(seg);
+      }
+    }
+    // 去重
+    return [...new Set(keywords)];
   }
 
   /**
