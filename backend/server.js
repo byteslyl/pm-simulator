@@ -28,8 +28,11 @@
 
 'use strict';
 
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 const { createEngine } = require('../engine');
 const {
   createLLMClient,
@@ -37,7 +40,22 @@ const {
   createEngineIntentClassifier,
   scoreDecision,
   scoreReflection,
+  generateRoleResponse,
 } = require('./llm-adapter');
+
+// 角色提示词构建器（用于 LLM 角色扮演）
+const techLeadPrompt = require('../engine/agent_prompts/tech_lead');
+const qaLeadPrompt = require('../engine/agent_prompts/qa_lead');
+const opsLeadPrompt = require('../engine/agent_prompts/ops_lead');
+const ceoPrompt = require('../engine/agent_prompts/ceo');
+
+// 角色 ID → 提示词构建器映射
+const ROLE_PROMPT_BUILDERS = {
+  R1: techLeadPrompt,
+  R2: qaLeadPrompt,
+  R3: opsLeadPrompt,
+  R4: ceoPrompt,
+};
 
 const app = express();
 
@@ -46,14 +64,191 @@ const llmClient = createLLMClient();
 const llmEnabled = !!llmClient;
 console.log(`[LLM] LLM 适配器: ${llmEnabled ? '已启用' : '未启用（使用关键词兜底）'}`);
 
+// ============ LLM 角色回复器 ============
+
+/**
+ * 构建引擎回复指令（简短自然，告知 LLM 本轮回复要点）
+ *
+ * 引擎已经确定了信息披露、信任档位、特殊检测等游戏逻辑结果，
+ * 通过简短指令传递给 LLM，让 LLM 在此框架内生成自然对话。
+ *
+ * @param {object} ctx - 上下文 { engineResult, currentTrust, trustTier, acquiredFacts, d1Choice, scenarioData }
+ * @returns {string} 回复指令文本
+ */
+function buildResponseDirective(ctx) {
+  const result = ctx.engineResult;
+  const scenarioData = ctx.scenarioData;
+  const lines = [];
+
+  // 特殊情况优先处理
+  if (result.isOutOfScope) {
+    const roleMap = { R1: '技术负责人沈屹', R2: 'QA负责人闻笛', R3: '运营负责人江照', R4: 'CEO许可' };
+    lines.push(`这个问题不在你的职责范围内，建议学生去找${roleMap[result.outOfScopeMatchedRole] || '对应的人'}。用你的角色语气拒绝回答。`);
+  } else if (result.isRepeat) {
+    lines.push('学生重复问了之前回答过的问题。简短提醒学生你已经说过了，根据信任档位决定耐心程度。');
+  } else if (result.crossRoleReferences && result.crossRoleReferences.length > 0) {
+    const refs = result.crossRoleReferences.map(r => {
+      const fact = (scenarioData.facts || []).find(f => f.id === r.factId);
+      return fact ? fact.content : r.factContent;
+    });
+    lines.push(`学生在提问中引用了从其他角色获取的信息：${refs.join('；')}。对此做出自然反应——可以承认对方数据，也可以表达自己的立场。`);
+  }
+
+  // 需要披露的事实
+  if (result.disclosedFacts && result.disclosedFacts.length > 0) {
+    const factContents = result.disclosedFacts.map(fid => {
+      const fact = (scenarioData.facts || []).find(f => f.id === fid);
+      return fact ? fact.content : null;
+    }).filter(Boolean);
+    if (factContents.length > 0) {
+      lines.push(`本轮你需要在对话中自然提及以下信息（用角色口吻表达，不要引用事实编号）：${factContents.join('；')}`);
+    }
+  }
+
+  // 面包屑/线索
+  if (result.breadcrumbSignals && result.breadcrumbSignals.length > 0) {
+    const signals = result.breadcrumbSignals.map(s => s.signal);
+    lines.push(`自然地给出以下线索暗示：${signals.join('；')}`);
+  }
+
+  // 低信任无信息时的行为
+  if (result.isLowTrust && !(result.disclosedFacts && result.disclosedFacts.length > 0)) {
+    if (result.isResistant) {
+      lines.push('你处于抵触状态，简短拒绝或表达不满。');
+    } else {
+      lines.push('你处于低信任状态，消极地表示没有更多信息。');
+    }
+  }
+
+  // 通用要求（简短）
+  lines.push('回复时用角色语气自然对话，不要暴露事实编号和信任度数值。');
+
+  return lines.length > 1 ? lines.join('\n') : (lines[0] || '');
+}
+
+/**
+ * 构建精简版角色系统提示词（避免过长提示词导致 LLM 回复过短）
+ * 保留角色人设核心 + 关键事实 + 信任档位行为规则
+ * @param {string} roleId - 角色ID
+ * @param {number} trust - 当前信任值
+ * @param {string[]} acquiredFacts - 已获取事实列表
+ * @param {object} scenarioData - 场景数据
+ * @returns {string} 精简系统提示词
+ */
+function buildCompactRolePrompt(roleId, trust, acquiredFacts, scenarioData) {
+  const role = (scenarioData.roles || []).find(r => r.id === roleId);
+  const roleFacts = (scenarioData.facts || []).filter(f => f.holder === roleId);
+  const publicFacts = (scenarioData.facts || []).filter(f => f.holder === 'ALL' || f.access_level === 'L0');
+  const tier = trust < 30 ? '抵触' : trust < 50 ? '失望' : trust < 70 ? '中性' : trust < 90 ? '配合' : '信任';
+
+  // 角色人设摘要
+  const personaMap = {
+    R1: { name: '沈屹', title: '技术负责人', personality: '沉静、系统思维强，习惯用数字说话但不会主动展开全部细节。回答偏内敛，给出关键数字后会停顿等待追问。', stance: '先把缺陷修了再说。不修就上Go全量你不同意，但灰度+预案可以接受。', domain: '技术方案和系统稳定性' },
+    R2: { name: '闻笛', title: 'QA负责人', personality: '严谨、直率，对质量底线毫不妥协。会用数据说话，不会被"感觉安全"说服。', stance: '质量底线不能突破。缺陷必须修复或绕过，不能带病上线。', domain: '质量保障和缺陷验证' },
+    R3: { name: '江照', title: '运营负责人', personality: '务实、结果导向，关注商业损失和用户体验。会推动快速决策。', stance: '按时上线，商业损失不可接受。但如果有稳妥的降级方案也可以接受。', domain: '运营策略和商业损失' },
+    R4: { name: '许可', title: 'CEO', personality: '宏观、战略导向，回答偏高层视角。对技术细节不熟悉，但对市场态势有独到判断。说话简洁有力。', stance: '不能因为保守错过窗口，但也不能翻车。支持专业判断。', domain: '战略方向和竞争格局' },
+  };
+  const p = personaMap[roleId] || { name: role?.name || roleId, title: role?.title || '', personality: '', stance: '', domain: '' };
+
+  // 信任档位行为
+  const tierBehaviors = {
+    '抵触': '极度不配合、防御、冷淡。回答极简，不主动补充，可能表达不满。弱信号减少。',
+    '失望': '消极、不展开。偶尔表达失望，弱信号减少。',
+    '中性': '职业、保留。正常回答但不展开，可暗示风险存在但不给具体数字。',
+    '配合': '友好、配合。回答详细，主动补充关联信息。弱信号增加。',
+    '信任': '坦诚、主动。主动给出未问到的信息，分享个人判断。',
+  };
+
+  // 格式化事实列表：已获取的显示完整内容，未获取的只显示弱信号
+  const publicFactsText = publicFacts.map(f => `- ${f.content}`).join('\n');
+  const roleFactsText = roleFacts.map(f => {
+    const acquired = acquiredFacts.includes(f.id);
+    if (acquired) {
+      return `- ${f.content}（已获取，可自由讨论）`;
+    }
+    // 未获取的事实：只显示弱信号，不显示完整内容
+    if (f.weak_signal) {
+      return `- 未公开信息。弱信号暗示方式：${f.weak_signal}`;
+    }
+    return `- 未公开信息。学生追问相关话题时可暗示"这个问题确实关键，需要进一步确认"。`;
+  }).join('\n');
+
+  return [
+    `# 角色身份`,
+    `你是${p.name}，「星盘结算」（支付链路SaaS产品）的${p.title}。`,
+    `场景：上线前夜，产品计划明日09:00上线。新引擎核心支付接口存在已知缺陷。`,
+    ``,
+    `## 性格与立场`,
+    `性格：${p.personality}`,
+    `立场：${p.stance}`,
+    `职责范围：${p.domain}。不属于你领域的问题，引导学生去找对应的人。`,
+    ``,
+    `## 当前信任档位：${tier}（信任值约${trust}/100，不要透露数值）`,
+    `行为要求：${tierBehaviors[tier]}`,
+    ``,
+    `## 公开事实（所有人可知）`,
+    publicFactsText,
+    ``,
+    `## 你持有的私有事实`,
+    roleFactsText || '（无）',
+    ``,
+    `## 核心规则`,
+    `1. 已标注"已获取"的事实可以自由讨论。未标注的事实，只能给弱信号暗示，严禁直接说出具体内容或数字。`,
+    `2. 严禁创造上述事实以外的任何数据。如果学生问的不在你的事实列表中，说"这个数据我目前手上没有"或"需要进一步确认"。`,
+    `3. 不要泄露其他角色（R1沈屹/R2闻笛/R3江照/R4许可）的私有信息。`,
+    `4. 用角色语气自然对话，不要像在念清单。`,
+    `5. 不要暴露事实编号、信任度数值等元信息。`,
+  ].join('\n');
+}
+
+/**
+ * 创建 LLM 角色回复器
+ * 每个角色使用独立的系统提示词和对话记忆，确保角色间信息隔离。
+ *
+ * @param {object} client - LLM 客户端
+ * @param {object} scenarioData - 场景数据（用于查询事实内容）
+ * @returns {function|null} 异步角色回复函数
+ */
+function createRoleResponder(client, scenarioData) {
+  if (!client) return null;
+
+  return async function llmRoleResponder(params) {
+    const { roleId, conversationHistory, studentMessage, currentTrust, acquiredFacts, d1Choice } = params;
+
+    // 构建精简版系统提示词
+    const systemPrompt = buildCompactRolePrompt(roleId, currentTrust, acquiredFacts, scenarioData);
+
+    // 构建引擎回复指令
+    const responseDirective = buildResponseDirective({
+      engineResult: params.engineResult,
+      currentTrust,
+      trustTier: params.trustTier,
+      acquiredFacts,
+      d1Choice,
+      scenarioData,
+    });
+
+    // 调用 LLM 生成角色回复
+    const response = await generateRoleResponse({
+      systemPrompt,
+      conversationHistory,
+      studentMessage,
+      responseDirective,
+    }, client);
+
+    return response;
+  };
+}
+
 // ============ 中间件 ============
 app.use(cors());
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 
-// 托管前端页面
-const path = require('path');
-const frontendPath = path.join(__dirname, '..', 'frontend.html');
+// 托管前端页面和静态资源
+const frontendDir = path.join(__dirname, '..', 'frontend');
+const frontendPath = path.join(frontendDir, 'index.html');
+app.use(express.static(frontendDir));
 app.get('/', (req, res) => {
   res.sendFile(frontendPath);
 });
@@ -183,10 +378,13 @@ app.post('/api/sessions', (req, res) => {
     const { studentId } = req.body || {};
     const sessionId = generateSessionId();
 
-    // 注入 LLM 意图分类器（如果可用）
+    // 注入 LLM 意图分类器和角色回复器（如果可用）
     const engineOptions = {};
     if (llmEnabled) {
       engineOptions.llmIntentClassifier = createEngineIntentClassifier(llmClient);
+      // 创建角色回复器（注入场景数据供查询事实内容）
+      const tempEngine = createEngine();
+      engineOptions.llmRoleResponder = createRoleResponder(llmClient, tempEngine.scenarioData);
     }
     const engine = createEngine(engineOptions);
     const initResult = engine.startSession();
@@ -314,7 +512,7 @@ app.post('/api/sessions/:sessionId/messages', async (req, res) => {
       }
     }
 
-    const result = entry.engine.processMessage(roleId, message, finalIntent);
+    const result = await entry.engine.processMessage(roleId, message, finalIntent);
     result.intentSource = intentSource;
 
     successResponse(res, result, '消息处理完成');

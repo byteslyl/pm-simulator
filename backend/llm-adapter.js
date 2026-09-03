@@ -71,7 +71,7 @@ function createLLMClient(config) {
     config: cfg,
 
     /**
-     * 调用 LLM Chat Completions API
+     * 调用 LLM Chat Completions API（单轮：system + user）
      * @param {string} systemPrompt - 系统提示词
      * @param {string} userMessage - 用户消息
      * @returns {Promise<string>} LLM 返回的文本内容
@@ -90,7 +90,90 @@ function createLLMClient(config) {
       const raw = await callChatAPI(cfg, systemPrompt, userMessage);
       return parseJSONResponse(raw);
     },
+
+    /**
+     * 调用 LLM Chat Completions API（多轮对话）
+     * @param {string} systemPrompt - 系统提示词
+     * @param {Array<{role:string,content:string}>} history - 对话历史
+     * @param {string} userMessage - 当前用户消息
+     * @param {object} [opts] - 选项 { temperature, maxTokens }
+     * @returns {Promise<string>} LLM 返回的文本内容
+     */
+    async chatMultiTurn(systemPrompt, history, userMessage, opts) {
+      const messages = [{ role: 'system', content: systemPrompt }];
+      if (history && history.length > 0) {
+        for (const turn of history) {
+          messages.push({ role: turn.role, content: turn.content });
+        }
+      }
+      messages.push({ role: 'user', content: userMessage });
+      return callChatAPIWithMessages(cfg, messages, opts);
+    },
   };
+}
+
+/**
+ * 调用 OpenAI 兼容的 Chat Completions API（多消息版本）
+ * @param {object} cfg - 配置
+ * @param {Array<{role:string,content:string}>} messages - 消息列表
+ * @param {object} [opts] - 选项 { temperature, maxTokens }
+ * @returns {Promise<string>} LLM 返回的文本
+ */
+function callChatAPIWithMessages(cfg, messages, opts) {
+  opts = opts || {};
+  return new Promise((resolve, reject) => {
+    const url = new URL(cfg.baseUrl.replace(/\/$/, '') + '/chat/completions');
+    const transport = url.protocol === 'https:' ? https : http;
+
+    const body = JSON.stringify({
+      model: cfg.model,
+      messages,
+      temperature: opts.temperature !== undefined ? opts.temperature : 0.7,
+      max_tokens: opts.maxTokens || 2048,
+    });
+
+    const options = {
+      method: 'POST',
+      hostname: url.hostname,
+      port: url.port || (url.protocol === 'https:' ? 443 : 80),
+      path: url.pathname + url.search,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${cfg.apiKey}`,
+        'Content-Length': Buffer.byteLength(body),
+      },
+      timeout: cfg.timeout,
+    };
+
+    const req = transport.request(options, (res) => {
+      let data = '';
+      res.on('data', (chunk) => (data += chunk));
+      res.on('end', () => {
+        if (res.statusCode !== 200) {
+          reject(new Error(`LLM API 返回 ${res.statusCode}: ${data.substring(0, 500)}`));
+          return;
+        }
+        try {
+          const json = JSON.parse(data);
+          const content = json.choices && json.choices[0] && json.choices[0].message
+            ? json.choices[0].message.content
+            : '';
+          resolve(content.trim());
+        } catch (e) {
+          reject(new Error(`LLM 响应解析失败: ${e.message}`));
+        }
+      });
+    });
+
+    req.on('error', (e) => reject(new Error(`LLM 请求失败: ${e.message}`)));
+    req.on('timeout', () => {
+      req.destroy();
+      reject(new Error(`LLM 请求超时 (${cfg.timeout}ms)`));
+    });
+
+    req.write(body);
+    req.end();
+  });
 }
 
 /**
@@ -441,6 +524,67 @@ async function scoreReflection(reflectionData, client) {
   }
 }
 
+// ============ 角色对话生成 ============
+
+/**
+ * 生成角色对话回复
+ *
+ * 引擎控制游戏逻辑（信息披露、信任档位、特殊检测），LLM 负责生成自然对话。
+ * 每个角色有独立的对话记忆，确保跨角色信息隔离。
+ *
+ * @param {object} params - 参数
+ * @param {string} params.systemPrompt - 角色系统提示词（由 agent_prompts/*.js 构建）
+ * @param {Array<{role:string,content:string}>} params.conversationHistory - 该角色的 LLM 对话历史
+ * @param {string} params.studentMessage - 学生当前提问
+ * @param {string} params.responseDirective - 引擎回复指令（告知 LLM 本轮该说什么）
+ * @param {object} client - LLM 客户端
+ * @returns {Promise<string|null>} 角色回复文本，失败返回 null
+ */
+async function generateRoleResponse(params, client) {
+  if (!client) return null;
+
+  const { systemPrompt, conversationHistory, studentMessage, responseDirective } = params;
+
+  // 构建消息列表：
+  // 1. 系统：角色人设提示词 + 引擎指令（自然融入，不加特殊标记）
+  // 2. 对话历史（user/assistant 交替）
+  // 3. 用户：学生当前提问（纯净，不含指令）
+  let fullSystemPrompt = systemPrompt;
+  if (responseDirective) {
+    fullSystemPrompt += '\n\n' + responseDirective;
+  }
+
+  const messages = [
+    { role: 'system', content: fullSystemPrompt },
+  ];
+
+  if (conversationHistory && conversationHistory.length > 0) {
+    for (const turn of conversationHistory) {
+      messages.push({ role: turn.role, content: turn.content });
+    }
+  }
+
+  messages.push({ role: 'user', content: studentMessage });
+
+  try {
+    const response = await callChatAPIWithMessages(client.config, messages, {
+      temperature: 0.75,
+      maxTokens: 2048,
+    });
+
+    if (response && response.length > 0) {
+      console.log(`[LLM] 角色回复生成成功 (${response.length} 字符)`);
+      return response;
+    }
+
+    console.warn('[LLM] 角色回复为空，降级到静态文本');
+    return null;
+  } catch (err) {
+    console.warn(`[LLM] 角色回复生成失败: ${err.message}，降级到静态文本`);
+    return null;
+  }
+}
+
 // ============ 导出 ============
 
 module.exports = {
@@ -450,8 +594,10 @@ module.exports = {
   createEngineIntentClassifier,
   scoreDecision,
   scoreReflection,
+  generateRoleResponse,
   // 暴露内部函数供测试
   parseJSONResponse,
   buildDecisionScoringPrompt,
   buildReflectionScoringPrompt,
+  callChatAPIWithMessages,
 };

@@ -81,6 +81,9 @@ function createEngine(options) {
     // 对话历史（按角色分组）：每个角色记录被问过的问题和披露的事实
     roleConversationHistory: {}, // { R1: [{ message, actionType, disclosedFacts, topics, timestamp }], ... }
 
+    // LLM 对话历史（按角色隔离）：每个角色独立的 LLM 多轮对话记忆
+    roleLLMHistory: {}, // { R1: [{ role: 'user', content }, { role: 'assistant', content }, ...], ... }
+
     // 已承认的冲突（避免重复承认）
     acknowledgedConflicts: new Set(),
 
@@ -108,6 +111,8 @@ function createEngine(options) {
     session.shownWeakSignals = new Set();
     // 对话历史
     session.roleConversationHistory = {};
+    // LLM 对话历史
+    session.roleLLMHistory = {};
     // 已承认的冲突
     session.acknowledgedConflicts = new Set();
     // 面包屑追踪：factId → 当前轮次（0=未开始，1=已展示第1级，2=已展示第2级）
@@ -140,14 +145,14 @@ function createEngine(options) {
   }
 
   /**
-   * 处理学生提问
-   * 流程：意图分类 → 关系更新 → 信息披露判定
+   * 处理学生提问（内部同步逻辑）
+   * 流程：意图分类 → 关系更新 → 信息披露判定 → 静态文本回复
    * @param {string} roleId - 被提问角色 id（R1/R2/R3/R4）
    * @param {string} studentMessage - 学生提问原文
    * @param {string} [preclassifiedIntent] - 外部 LLM 预分类意图（可选，跳过内置分类）
    * @returns {{actionType:string, trustChange:object, disclosedFacts:string[], formalInquiry:object, response:string}}
    */
-  function processMessage(roleId, studentMessage, preclassifiedIntent) {
+  function _processMessageSync(roleId, studentMessage, preclassifiedIntent) {
     if (!session.started) {
       throw new Error('会话未初始化，请先调用 startSession()');
     }
@@ -620,6 +625,64 @@ function createEngine(options) {
       isLowTrust,
       isResistant,
     };
+  }
+
+  /**
+   * 处理学生提问（异步，支持 LLM 角色对话生成）
+   *
+   * 引擎控制游戏逻辑（信息披露、信任档位、特殊检测），
+   * LLM 负责生成自然对话回复。每个角色有独立的 LLM 对话记忆。
+   *
+   * @param {string} roleId - 被提问角色 id（R1/R2/R3/R4）
+   * @param {string} studentMessage - 学生提问原文
+   * @param {string} [preclassifiedIntent] - 外部 LLM 预分类意图
+   * @returns {Promise<object>} 处理结果（含 response, responseSource 等字段）
+   */
+  async function processMessage(roleId, studentMessage, preclassifiedIntent) {
+    // 1. 执行同步游戏逻辑（意图分类 → 信任更新 → 信息披露 → 静态回复）
+    const result = _processMessageSync(roleId, studentMessage, preclassifiedIntent);
+
+    // 2. 如果 LLM 角色回复器可用，用 LLM 生成自然对话
+    if (typeof options.llmRoleResponder === 'function' && result.response) {
+      try {
+        const role = ROLES.find((r) => r.id === roleId);
+        const llmResponse = await options.llmRoleResponder({
+          roleId,
+          roleName: role ? role.name : roleId,
+          roleTitle: role ? role.title : '',
+          studentMessage,
+          engineResult: result,
+          conversationHistory: (session.roleLLMHistory[roleId] || []).slice(),
+          currentTrust: result.trustChange ? result.trustChange.newValue : 50,
+          trustTier: result.trustChange ? result.trustChange.newTier : '中性',
+          acquiredFacts: session.acquiredFacts.slice(),
+          d1Choice: session.d1Choice,
+        });
+
+        if (llmResponse) {
+          result.response = llmResponse;
+          result.responseSource = 'llm';
+        } else {
+          result.responseSource = 'static_fallback';
+        }
+      } catch (err) {
+        console.warn(`[Engine] LLM 角色回复异常: ${err.message}，使用静态文本`);
+        result.responseSource = 'static_fallback';
+      }
+
+      // 3. 记录 LLM 对话历史（无论成功与否，都记录本轮对话用于后续上下文）
+      if (!session.roleLLMHistory[roleId]) {
+        session.roleLLMHistory[roleId] = [];
+      }
+      session.roleLLMHistory[roleId].push(
+        { role: 'user', content: studentMessage },
+        { role: 'assistant', content: result.response }
+      );
+    } else {
+      result.responseSource = 'static';
+    }
+
+    return result;
   }
 
   /**

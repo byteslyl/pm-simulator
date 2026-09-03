@@ -198,17 +198,23 @@ body::before {
 .role-header { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
 
 .role-avatar {
-  width: 32px; height: 32px;
+  width: 36px; height: 36px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 13px;
   flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 2px solid var(--bg-base);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-.role-avatar.r1 { background: #2d4a6e; color: #7eb8e8; }
-.role-avatar.r2 { background: #4a2d3e; color: #e87ea0; }
-.role-avatar.r3 { background: #2d4e3e; color: #6ee8a0; }
-.role-avatar.r4 { background: #4e4a2d; color: #e8c87e; }
+.role-avatar.r1 { background-image: url('assets/avatar_R1_沈屹.jpg'); }
+.role-avatar.r2 { background-image: url('assets/avatar_R2_闻笛.jpg'); }
+.role-avatar.r3 { background-image: url('assets/avatar_R3_江照.jpg'); }
+.role-avatar.r4 { background-image: url('assets/avatar_R4_许可.jpg'); }
+.role-avatar .avatar-fallback { display: none; }
 
 .role-info { flex: 1; min-width: 0; }
 .role-name { font-weight: 600; font-size: 13px; }
@@ -282,18 +288,23 @@ body::before {
 .chat-message.user { align-self: flex-end; flex-direction: row-reverse; }
 
 .message-avatar {
-  width: 36px; height: 36px;
+  width: 40px; height: 40px;
   border-radius: 50%;
   display: flex; align-items: center; justify-content: center;
   font-weight: 700; font-size: 14px;
   flex-shrink: 0;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  border: 2px solid var(--bg-base);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
 .message-avatar.user { background: var(--accent-dim); color: var(--accent); }
-.message-avatar.r1 { background: #2d4a6e; color: #7eb8e8; }
-.message-avatar.r2 { background: #4a2d3e; color: #e87ea0; }
-.message-avatar.r3 { background: #2d4e3e; color: #6ee8a0; }
-.message-avatar.r4 { background: #4e4a2d; color: #e8c87e; }
+.message-avatar.r1 { background-image: url('assets/avatar_R1_沈屹.jpg'); }
+.message-avatar.r2 { background-image: url('assets/avatar_R2_闻笛.jpg'); }
+.message-avatar.r3 { background-image: url('assets/avatar_R3_江照.jpg'); }
+.message-avatar.r4 { background-image: url('assets/avatar_R4_许可.jpg'); }
 .message-avatar.system { background: var(--border); color: var(--text-secondary); }
 
 .message-bubble {
@@ -1464,7 +1475,7 @@ function renderRoles() {
     return `
       <div class="role-card" data-role="${r.id}" onclick="selectRole('${r.id}')">
         <div class="role-header">
-          <div class="role-avatar ${r.id.toLowerCase()}">${r.name[0]}</div>
+          <div class="role-avatar ${r.id.toLowerCase()}"></div>
           <div class="role-info">
             <div class="role-name">${r.name}</div>
             <div class="role-title">${r.title}</div>
@@ -1625,7 +1636,7 @@ function addChatMessage(type, text, avatarId, meta = {}) {
   const msgEl = document.createElement('div');
   msgEl.className = `chat-message ${type}`;
   msgEl.innerHTML = `
-    <div class="message-avatar ${avatarClass}">${avatarText}</div>
+    <div class="message-avatar ${avatarClass}">${type === 'user' ? avatarText : ''}</div>
     <div>
       ${metaHtml}
       <div class="message-bubble">${escapeHtml(text)}${factHtml}${breadcrumbHtml}${conflictHtml}${crossRoleHtml}</div>
@@ -1655,7 +1666,7 @@ function addLoadingMessage(roleId) {
   msgEl.className = 'chat-message role';
   msgEl.id = id;
   msgEl.innerHTML = `
-    <div class="message-avatar ${roleId.toLowerCase()}">${role?.name[0] || '?'}</div>
+    <div class="message-avatar ${roleId.toLowerCase()}"></div>
     <div class="message-bubble">
       <span style="color: var(--text-muted);">思考中</span>
       <span class="loading-dots" style="margin-left: 4px;"><span></span><span></span><span></span></span>
