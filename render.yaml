@@ -1,0 +1,25 @@
+# Render 部署配置文件
+# 文档: https://render.com/docs/blueprint-spec
+
+services:
+  - type: web
+    name: pm-simulator
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: LLM_ENABLED
+        value: true
+      - key: LLM_API_KEY
+        sync: false
+      - key: LLM_BASE_URL
+        value: https://open.bigmodel.cn/api/paas/v4
+      - key: LLM_MODEL
+        value: glm-5.2
+      - key: LLM_TIMEOUT
+        value: 60000
+      - key: NODE_ENV
+        value: production
