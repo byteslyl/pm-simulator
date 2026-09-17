@@ -6,7 +6,9 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "node backend/server.js",
-    "test": "node backend/tests/api.test.js"
+    "test": "npm run test:frontend && npm run test:api",
+    "test:api": "node backend/tests/api.test.js",
+    "test:frontend": "node scripts/frontend-smoke.test.js"
   },
   "dependencies": {
     "cors": "^2.8.5",

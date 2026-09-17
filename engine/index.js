@@ -31,6 +31,15 @@ const resultEngine = require('./result_engine');
 // 从 scenario_data.json 提取角色与事实定义
 const ROLES = scenarioData.roles || [];
 const FACTS = scenarioData.facts || [];
+const DEFAULT_BUDGET_MINUTES = 40;
+const WORKBENCH_REQUIRED_FIELDS = [
+  'facts',
+  'goals',
+  'constraints',
+  'option',
+  'risks',
+  'evidence_refs',
+];
 
 /**
  * 获取事实定义
@@ -62,6 +71,19 @@ function createEngine(options) {
 
     // 已获取事实
     acquiredFacts: [],
+
+    // 信息获取预算
+    budget: {
+      totalMinutes: scenarioData.timeline && scenarioData.timeline.real_time_budget_minutes
+        ? scenarioData.timeline.real_time_budget_minutes
+        : DEFAULT_BUDGET_MINUTES,
+      spentMinutes: 0,
+      remainingMinutes: scenarioData.timeline && scenarioData.timeline.real_time_budget_minutes
+        ? scenarioData.timeline.real_time_budget_minutes
+        : DEFAULT_BUDGET_MINUTES,
+      exhausted: false,
+      events: [],
+    },
 
     // D1/D2 决策
     d1Choice: null,
@@ -104,6 +126,7 @@ function createEngine(options) {
   function startSession() {
     session.started = true;
     session.acquiredFacts = [];
+    session.budget = createInitialBudget();
     session.d1Choice = null;
     session.d2Decision = null;
     session.interviewLog = [];
@@ -140,8 +163,75 @@ function createEngine(options) {
       timeline: scenarioData.timeline,
       roles: ROLES.map((r) => ({ id: r.id, name: r.name, title: r.title })),
       initialFacts: session.acquiredFacts.slice(),
+      budget: getBudgetState(),
       message: `会话已初始化：${session.scenarioName}（${session.scenarioId} v${session.version}）`,
     };
+  }
+
+  function createInitialBudget() {
+    const total = scenarioData.timeline && scenarioData.timeline.real_time_budget_minutes
+      ? scenarioData.timeline.real_time_budget_minutes
+      : DEFAULT_BUDGET_MINUTES;
+    return {
+      totalMinutes: total,
+      spentMinutes: 0,
+      remainingMinutes: total,
+      exhausted: false,
+      events: [],
+    };
+  }
+
+  function getBudgetState() {
+    const b = session.budget || createInitialBudget();
+    return {
+      totalMinutes: b.totalMinutes,
+      spentMinutes: b.spentMinutes,
+      remainingMinutes: b.remainingMinutes,
+      exhausted: b.exhausted,
+      events: b.events.slice(-8),
+    };
+  }
+
+  function estimateInterviewCost(roleId, actionType, result) {
+    const baseByIntent = {
+      structured_questioning: 4,
+      risk_verification: 5,
+      plan_negotiation: 5,
+      resource_inquiry: 4,
+      executive_alignment: 5,
+      one_sided_questioning: 3,
+      offensive_expression: 3,
+      ignoring_role: 2,
+      out_of_scope_questioning: 2,
+    };
+    const rolePremium = roleId === 'R4' ? 1 : 0;
+    const disclosed = result && result.disclosedFacts ? result.disclosedFacts.length : 0;
+    const disclosurePremium = disclosed > 0 ? Math.min(2, disclosed) : 0;
+    const repeatDiscount = result && result.isRepeat ? -1 : 0;
+    return Math.max(1, (baseByIntent[actionType] || 4) + rolePremium + disclosurePremium + repeatDiscount);
+  }
+
+  function consumeInterviewBudget(roleId, actionType, result) {
+    if (!session.budget) session.budget = createInitialBudget();
+    if (session.budget.remainingMinutes <= 0) {
+      session.budget.exhausted = true;
+      throw new Error('信息获取预算已耗尽，请进入 D1/D2 决策阶段');
+    }
+
+    const plannedCost = estimateInterviewCost(roleId, actionType, result);
+    const actualCost = Math.min(plannedCost, session.budget.remainingMinutes);
+    session.budget.spentMinutes += actualCost;
+    session.budget.remainingMinutes = Math.max(0, session.budget.totalMinutes - session.budget.spentMinutes);
+    session.budget.exhausted = session.budget.remainingMinutes <= 0;
+    session.budget.events.push({
+      timestamp: new Date().toISOString(),
+      roleId,
+      actionType,
+      plannedCost,
+      actualCost,
+      remainingMinutes: session.budget.remainingMinutes,
+    });
+    return session.budget.events[session.budget.events.length - 1];
   }
 
   /**
@@ -639,8 +729,15 @@ function createEngine(options) {
    * @returns {Promise<object>} 处理结果（含 response, responseSource 等字段）
    */
   async function processMessage(roleId, studentMessage, preclassifiedIntent) {
+    if (!session.budget) session.budget = createInitialBudget();
+    if (session.budget.remainingMinutes <= 0) {
+      session.budget.exhausted = true;
+      throw new Error('信息获取预算已耗尽，请进入 D1/D2 决策阶段');
+    }
     // 1. 执行同步游戏逻辑（意图分类 → 信任更新 → 信息披露 → 静态回复）
     const result = _processMessageSync(roleId, studentMessage, preclassifiedIntent);
+    result.budgetEvent = consumeInterviewBudget(roleId, result.actionType, result);
+    result.budget = getBudgetState();
 
     // 2. 如果 LLM 角色回复器可用，用 LLM 生成自然对话
     if (typeof options.llmRoleResponder === 'function' && result.response) {
@@ -940,27 +1037,25 @@ function createEngine(options) {
       throw new Error('会话未初始化，请先调用 startSession()');
     }
 
-    session.d2Decision = d2Decision;
-    session.d2SubmittedAt = new Date().toISOString();
+    const normalizedDecision = validateDecisionWorkbench(d2Decision);
 
-    const option = typeof d2Decision === 'string'
-      ? d2Decision
-      : (d2Decision && (d2Decision.option || d2Decision.d2_option)) || '';
+    session.d2Decision = normalizedDecision;
+    session.d2SubmittedAt = new Date().toISOString();
 
     // 1. 硬约束检查
     session.constraintResults = constraintEngine.checkConstraints(
-      typeof d2Decision === 'object' ? d2Decision : { option: d2Decision },
+      normalizedDecision,
       session.acquiredFacts,
       session.d1Choice,
       session.d2SubmittedAt
     );
 
     // 2. 状态机计算
-    session.stateEngine.applyD2Decision(d2Decision, session.acquiredFacts);
+    session.stateEngine.applyD2Decision(normalizedDecision, session.acquiredFacts);
 
     // 3. 结果规则计算
     session.resultResults = resultEngine.calculateResults(
-      d2Decision,
+      normalizedDecision,
       session.acquiredFacts,
       session.d1Choice
     );
@@ -969,7 +1064,57 @@ function createEngine(options) {
       constraintResults: session.constraintResults,
       stateResults: session.stateEngine.getState(),
       resultResults: session.resultResults,
+      workbench: {
+        fields: WORKBENCH_REQUIRED_FIELDS,
+        evidenceRefs: normalizedDecision.evidence_refs,
+      },
     };
+  }
+
+  function normalizeList(value) {
+    if (Array.isArray(value)) return value.map(String).map((v) => v.trim()).filter(Boolean);
+    if (typeof value === 'string') {
+      return value.split(/[\n,，;；]+/).map((v) => v.trim()).filter(Boolean);
+    }
+    return [];
+  }
+
+  function validateDecisionWorkbench(d2Decision) {
+    if (!d2Decision || typeof d2Decision !== 'object' || Array.isArray(d2Decision)) {
+      throw new Error('D2 必须通过六要素决策工作台提交，不能只提交方案字符串');
+    }
+
+    const normalized = Object.assign({}, d2Decision, {
+      option: d2Decision.option || d2Decision.d2_option || '',
+      facts: normalizeList(d2Decision.facts),
+      goals: normalizeList(d2Decision.goals),
+      constraints: normalizeList(d2Decision.constraints),
+      risks: normalizeList(d2Decision.risks),
+      evidence_refs: normalizeList(d2Decision.evidence_refs || d2Decision.cited_facts),
+    });
+
+    const missing = [];
+    for (const field of WORKBENCH_REQUIRED_FIELDS) {
+      const value = normalized[field];
+      if (Array.isArray(value) ? value.length === 0 : !value) {
+        missing.push(field);
+      }
+    }
+
+    if (missing.length > 0) {
+      throw new Error(`D2 决策工作台未填齐：${missing.join(', ')}`);
+    }
+
+    const hallucinated = normalized.evidence_refs.filter((fid) => session.acquiredFacts.indexOf(fid) < 0);
+    if (hallucinated.length > 0) {
+      throw new Error(`证据引用包含未获取事实：${hallucinated.join(', ')}`);
+    }
+
+    if (normalized.evidence_refs.length < 3) {
+      throw new Error('D2 至少需要引用 3 条已获取事实作为证据');
+    }
+
+    return normalized;
   }
 
   /**
@@ -985,10 +1130,12 @@ function createEngine(options) {
       d1SubmittedAt: session.d1SubmittedAt,
       d2Decision: session.d2Decision,
       d2SubmittedAt: session.d2SubmittedAt,
+      budget: getBudgetState(),
       state: session.stateEngine ? session.stateEngine.getState() : null,
       relationships: session.relationshipEngine ? session.relationshipEngine.getAllTiers() : null,
       interviewLogCount: session.interviewLog.length,
       crossValidationCount: session.crossValidationCount,
+      canInterview: !getBudgetState().exhausted,
     };
   }
 
@@ -1049,6 +1196,7 @@ function createEngine(options) {
           ? session.d2Decision
           : { option: session.d2Decision },
         acquiredFacts: session.acquiredFacts.slice(),
+        budget: getBudgetState(),
       },
 
       // 评分

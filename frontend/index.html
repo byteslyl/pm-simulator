@@ -5,32 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>CareerCraft 项目决策模拟器 · 上线前夜</title>
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700;900&family=JetBrains+Mono:wght@400;600;800&display=swap');
-
 :root {
-  --bg-base: #0a0e14;
-  --bg-panel: #111721;
-  --bg-card: #1a2230;
-  --bg-hover: #222d3d;
-  --border: #2a3647;
-  --border-active: #3d5170;
-  --text-primary: #e8edf5;
-  --text-secondary: #8b9ab4;
-  --text-muted: #5a6d8a;
-  --accent: #ff9a3c;
-  --accent-glow: #ff9a3c33;
-  --accent-dim: #c77a2e;
-  --danger: #ef4f5e;
-  --danger-glow: #ef4f5e22;
-  --success: #3dd68c;
-  --info: #4fb8e8;
-  --purple: #b86eff;
-  --radius: 6px;
-  --radius-lg: 10px;
-  --shadow: 0 4px 24px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 40px rgba(0,0,0,0.6);
-  --mono: 'JetBrains Mono', 'Courier New', monospace;
-  --sans: 'Noto Sans SC', -apple-system, sans-serif;
+  --bg-base: #080b10;
+  --bg-panel: #0f151d;
+  --bg-card: #161e2a;
+  --bg-hover: #202b39;
+  --border: #263241;
+  --border-active: #415168;
+  --text-primary: #eef3f8;
+  --text-secondary: #9aa8ba;
+  --text-muted: #66768d;
+  --accent: #f6a04d;
+  --accent-glow: #f6a04d2e;
+  --accent-dim: #c77b35;
+  --danger: #ef5b68;
+  --danger-glow: #ef5b6824;
+  --success: #39d28f;
+  --info: #58b7d7;
+  --purple: #b68cff;
+  --radius: 8px;
+  --radius-lg: 14px;
+  --shadow: 0 12px 34px rgba(0,0,0,0.32);
+  --shadow-lg: 0 22px 70px rgba(0,0,0,0.46);
+  --mono: 'SFMono-Regular', 'Cascadia Mono', 'Consolas', 'Courier New', monospace;
+  --sans: 'Microsoft YaHei UI', 'PingFang SC', 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -39,7 +37,10 @@ html, body { height: 100%; overflow: hidden; }
 
 body {
   font-family: var(--sans);
-  background: var(--bg-base);
+  background:
+    linear-gradient(135deg, rgba(246,160,77,0.08), transparent 28%),
+    linear-gradient(315deg, rgba(88,183,215,0.07), transparent 32%),
+    var(--bg-base);
   color: var(--text-primary);
   font-size: 14px;
   line-height: 1.6;
@@ -52,8 +53,11 @@ body::before {
   position: fixed;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 20% 30%, rgba(255,154,60,0.04) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(75,184,232,0.03) 0%, transparent 50%);
+    linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px),
+    radial-gradient(circle at 16% 20%, rgba(246,160,77,0.08) 0%, transparent 42%),
+    radial-gradient(circle at 82% 76%, rgba(88,183,215,0.06) 0%, transparent 44%);
+  background-size: 48px 48px, 48px 48px, auto, auto;
   pointer-events: none;
   z-index: 0;
 }
@@ -158,7 +162,7 @@ body::before {
   50% { opacity: 0.4; }
 }
 
-/* ===== Sidebar — Roles ===== */
+/* ===== Sidebar - Roles ===== */
 .sidebar {
   grid-area: sidebar;
   background: var(--bg-panel);
@@ -264,6 +268,67 @@ body::before {
   background: var(--bg-base);
 }
 
+.case-spine {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.05fr) repeat(4, minmax(110px, 0.55fr));
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid var(--border);
+  background:
+    linear-gradient(90deg, rgba(255,255,255,0.045), transparent),
+    rgba(10,14,20,0.72);
+}
+
+.case-spine-title,
+.case-spine-metric {
+  min-height: 58px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  background: rgba(22,30,42,0.72);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+}
+
+.case-spine-title {
+  padding: 12px 14px;
+}
+
+.case-spine-title strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.2;
+}
+
+.case-spine-title span {
+  display: block;
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.case-spine-metric {
+  padding: 10px 12px;
+}
+
+.case-spine-metric b {
+  display: block;
+  color: var(--accent);
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 800;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.case-spine-metric span {
+  display: block;
+  margin-top: 7px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
 .chat-messages {
   flex: 1;
   overflow-y: auto;
@@ -353,7 +418,7 @@ body::before {
 }
 
 .message-meta .intent-tag.llm { background: #1e3a4a; color: var(--info); }
-.message-meta .intent-tag.keyword { background: #3a3a2a; color: #c8c87e; }
+.message-meta .intent-tag.detected { background: #3a3a2a; color: #c8c87e; }
 
 .fact-disclosure {
   margin-top: 8px;
@@ -376,6 +441,35 @@ body::before {
 }
 
 .fact-disclosure.red-line .fact-id { color: var(--danger); }
+
+.signal-strip {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin: 8px 0 2px;
+}
+
+.signal-chip {
+  padding: 3px 8px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.045);
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.signal-chip.strong {
+  color: var(--accent);
+  border-color: rgba(246,160,77,0.32);
+  background: rgba(246,160,77,0.08);
+}
+
+.signal-chip.risk {
+  color: var(--danger);
+  border-color: rgba(239,91,104,0.28);
+  background: rgba(239,91,104,0.08);
+}
 
 /* Chat input */
 .chat-input-area {
@@ -495,9 +589,12 @@ body::before {
   border-radius: var(--radius);
   font-size: 12px;
   transition: border-color 0.2s;
+  cursor: grab;
 }
 
 .fact-card:hover { border-color: var(--border-active); }
+.fact-card:active { cursor: grabbing; transform: translateY(1px); }
+.fact-card.selected-for-workbench { border-color: var(--accent); background: var(--accent-glow); }
 
 .fact-card.red-line { border-left: 2px solid var(--danger); }
 .fact-card.normal { border-left: 2px solid var(--info); }
@@ -551,6 +648,401 @@ body::before {
   font-size: 10px;
   color: var(--purple);
   font-style: italic;
+}
+
+.budget-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border: 1px solid rgba(255,154,60,0.42);
+  border-radius: 999px;
+  background: rgba(255,154,60,0.1);
+  color: var(--text-secondary);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.budget-chip strong {
+  color: var(--accent);
+  font-size: 14px;
+}
+
+.budget-panel,
+.workspace-panel,
+.coach-panel,
+.demo-panel {
+  margin: 0 10px 14px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.065), rgba(255,255,255,0.02)),
+    rgba(17,23,33,0.92);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.panel-kicker {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.budget-gauge {
+  position: relative;
+  width: 128px;
+  height: 128px;
+  margin: 8px auto 2px;
+}
+
+.budget-ring {
+  width: 128px;
+  height: 128px;
+  transform: rotate(-90deg);
+  display: block;
+}
+
+.budget-ring-track {
+  fill: none;
+  stroke: var(--bg-base);
+  stroke-width: 10;
+}
+
+.budget-ring-fg {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 314.16;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 0.55s cubic-bezier(0.22, 1, 0.36, 1), stroke 0.55s ease;
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+}
+
+.budget-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.budget-ring-num {
+  font-family: var(--mono);
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--text-primary);
+}
+
+.budget-ring-center small {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.budget-hint {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.coach-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.coach-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-primary);
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.coach-note {
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: rgba(8,11,16,0.58);
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.coach-note.strong {
+  color: var(--accent);
+  border-color: rgba(246,160,77,0.32);
+  background: rgba(246,160,77,0.08);
+}
+
+.demo-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.demo-step-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.demo-step-title {
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
+.demo-step-copy {
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.demo-action-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.demo-btn {
+  padding: 8px 9px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: rgba(8,11,16,0.58);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.demo-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-active);
+}
+
+.demo-btn.primary {
+  color: var(--bg-base);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.info-title.compact {
+  padding: 0 0 10px;
+}
+
+.workspace-mini-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.workspace-mini {
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-muted);
+  font-size: 11px;
+  text-align: center;
+  background: var(--bg-base);
+}
+
+.workspace-mini.done {
+  color: var(--success);
+  border-color: rgba(61,214,140,0.45);
+  background: rgba(61,214,140,0.08);
+}
+
+.evidence-network-panel {
+  margin: 0 10px 14px;
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.058), rgba(255,255,255,0.018)),
+    rgba(17,23,33,0.86);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.07);
+}
+
+.evidence-network-grid {
+  margin-top: 10px;
+}
+
+.evidence-network-svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.evidence-network-svg .nn-node circle {
+  transition: stroke 0.2s ease, fill 0.2s ease, filter 0.2s ease;
+  cursor: pointer;
+}
+
+.evidence-network-svg .nn-node:hover circle,
+.evidence-network-svg .nn-node.sel circle {
+  stroke: var(--accent);
+  filter: drop-shadow(0 0 6px var(--accent-glow));
+}
+
+.evidence-network-svg .nn-node.dim circle {
+  filter: none;
+}
+
+.evidence-network-svg text {
+  user-select: none;
+  pointer-events: none;
+}
+
+.network-filter-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.network-filter-btn {
+  padding: 7px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(8,11,16,0.55);
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.network-filter-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-active);
+}
+
+.network-filter-btn.active {
+  color: var(--bg-base);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.network-action-btn {
+  width: 100%;
+  margin-top: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(246,160,77,0.35);
+  border-radius: 8px;
+  background: rgba(246,160,77,0.1);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.network-action-btn:hover {
+  background: rgba(246,160,77,0.16);
+  border-color: var(--accent);
+}
+
+.network-action-btn:disabled {
+  cursor: not-allowed;
+  color: var(--text-muted);
+  border-color: var(--border);
+  background: rgba(8,11,16,0.45);
+}
+
+.evidence-node {
+  min-height: 74px;
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(8,11,16,0.55);
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s;
+}
+
+.evidence-node:hover {
+  border-color: rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.045);
+}
+
+.evidence-node.active {
+  border-color: rgba(246,160,77,0.4);
+  background: rgba(246,160,77,0.07);
+}
+
+.evidence-node.selected {
+  border-color: var(--accent);
+  background: rgba(246,160,77,0.14);
+  box-shadow: 0 0 0 1px rgba(246,160,77,0.14);
+}
+
+.evidence-node-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.evidence-node-count {
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.evidence-node-sub {
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.evidence-network-summary {
+  margin-top: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(8,11,16,0.52);
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.55;
+}
+
+.evidence-path-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  margin-top: 10px;
+}
+
+.evidence-path-item {
+  padding: 8px 9px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: rgba(8,11,16,0.45);
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.evidence-path-item strong {
+  color: var(--accent);
+  font-weight: 800;
 }
 
 /* Breadcrumb signal */
@@ -663,7 +1155,7 @@ body::before {
   padding: 16px 32px; display: flex; align-items: center; justify-content: space-between; z-index: 10;
 }
 .report-page-title { font-size: 20px; font-weight: 700; }
-.report-page-content { max-width: 900px; margin: 0 auto; padding: 32px; }
+.report-page-content { max-width: 1120px; margin: 0 auto; padding: 32px; }
 .score-hero { text-align: center; padding: 32px; background: var(--bg-panel); border: 1px solid var(--border); border-radius: var(--radius-lg); margin-bottom: 32px; }
 .score-hero-value { font-family: var(--mono); font-size: 56px; font-weight: 900; line-height: 1; }
 .score-hero-grade { font-size: 16px; color: var(--text-secondary); margin-top: 8px; }
@@ -695,6 +1187,448 @@ body::before {
 .cross-role-ref { margin-top: 6px; padding: 6px 8px; background: rgba(75,184,232,0.08); border: 1px solid rgba(75,184,232,0.3); border-radius: 4px; font-size: 11px; color: var(--info); }
 .repeat-badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; background: #3a3a2a; color: #c8c87e; margin-left: 4px; }
 
+.report-hero-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.78fr) minmax(420px, 1.22fr);
+  gap: 18px;
+  margin-bottom: 24px;
+}
+
+.report-panel {
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.06), rgba(255,255,255,0.018)),
+    var(--bg-panel);
+  border: 1px solid rgba(255,255,255,0.085);
+  border-radius: 14px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08), var(--shadow);
+}
+
+.score-hero.compact {
+  height: 100%;
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 16px;
+}
+
+.report-kpi-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.report-kpi {
+  padding: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(10,14,20,0.62);
+}
+
+.report-kpi b {
+  display: block;
+  color: var(--text-primary);
+  font-family: var(--mono);
+  font-size: 18px;
+}
+
+.report-kpi span {
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.radar-panel {
+  padding: 18px;
+  display: grid;
+  grid-template-columns: 230px 1fr;
+  gap: 18px;
+  align-items: center;
+}
+
+.radar-svg {
+  width: 230px;
+  height: 230px;
+  overflow: visible;
+}
+
+.radar-axis-label {
+  fill: var(--text-secondary);
+  font-size: 10px;
+  font-family: var(--sans);
+}
+
+.dimension-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dimension-row {
+  display: grid;
+  grid-template-columns: 80px 1fr 42px;
+  gap: 8px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.dimension-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--bg-base);
+  border: 1px solid var(--border);
+}
+
+.dimension-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--info), var(--accent));
+}
+
+.dimension-detail {
+  grid-column: 1 / -1;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.report-two-col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+}
+
+.workbench-report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.workbench-report-cell {
+  min-height: 88px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: rgba(10,14,20,0.58);
+}
+
+.workbench-report-cell .score-label {
+  margin-bottom: 6px;
+}
+
+.report-evidence-path {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.report-path-card {
+  min-height: 148px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(10,14,20,0.58);
+}
+
+.report-path-card.active {
+  border-color: rgba(246,160,77,0.38);
+  background: rgba(246,160,77,0.07);
+}
+
+.report-path-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.report-path-count {
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 12px;
+}
+
+.report-path-focus {
+  margin-top: 5px;
+  color: var(--text-muted);
+  font-size: 11px;
+}
+
+.report-path-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.report-path-tag {
+  padding: 4px 7px;
+  border: 1px solid var(--border-active);
+  border-radius: 999px;
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--mono);
+  font-size: 10px;
+}
+
+.report-path-tag.cited {
+  color: var(--accent);
+  border-color: rgba(246,160,77,0.42);
+  background: rgba(246,160,77,0.1);
+}
+
+.report-path-bridge {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(8,11,16,0.54);
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.fact-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.fact-chip {
+  padding: 5px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-active);
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.fact-chip.missed {
+  border-color: rgba(239,79,94,0.42);
+  color: var(--danger);
+  background: var(--danger-glow);
+}
+
+.budget-event-row {
+  display: grid;
+  grid-template-columns: 56px 1fr 58px;
+  gap: 8px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.budget-event-row:last-child {
+  border-bottom: 0;
+}
+
+.report-diagnostic-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.diagnostic-card {
+  position: relative;
+  overflow: hidden;
+  min-height: 154px;
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.09);
+  border-radius: 14px;
+  background:
+    linear-gradient(155deg, rgba(255,255,255,0.07), rgba(255,255,255,0.018)),
+    rgba(16,22,31,0.92);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.diagnostic-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--accent);
+}
+
+.diagnostic-card.good::before { background: var(--success); }
+.diagnostic-card.warn::before { background: var(--accent); }
+.diagnostic-card.risk::before { background: var(--danger); }
+
+.diagnostic-eyebrow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.diagnostic-pill {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: rgba(8,11,16,0.58);
+  font-size: 10px;
+}
+
+.diagnostic-title {
+  margin-top: 12px;
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.diagnostic-copy {
+  margin-top: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.diagnostic-meta {
+  margin-top: 12px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.counterfactual-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.counterfactual-item {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-height: 132px;
+  margin-bottom: 0;
+}
+
+.counterfactual-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.counterfactual-label {
+  color: var(--text-primary);
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.counterfactual-condition {
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.counterfactual-result {
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.counterfactual-badge {
+  flex-shrink: 0;
+  margin-left: 0;
+}
+
+.cf-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cf-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.cf-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  background: rgba(255,255,255,0.03);
+}
+
+.cf-chip.risk-high { color: #ef5b68; border-color: rgba(239,91,104,0.4); background: rgba(239,91,104,0.12); }
+.cf-chip.risk-mid { color: #f6a04d; border-color: rgba(246,160,77,0.4); background: rgba(246,160,77,0.12); }
+.cf-chip.risk-low { color: #39d28f; border-color: rgba(57,210,143,0.4); background: rgba(57,210,143,0.12); }
+.cf-chip.support { color: #58b7d7; border-color: rgba(88,183,215,0.35); background: rgba(88,183,215,0.1); }
+
+.cf-tag {
+  flex-shrink: 0;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 10px;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  background: rgba(255,255,255,0.03);
+}
+
+.counterfactual-item.student {
+  border-left: 3px solid var(--accent);
+  box-shadow: 0 0 0 1px rgba(246,160,77,0.25), 0 8px 24px rgba(0,0,0,0.24);
+}
+
+.action-plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.action-plan-item {
+  min-height: 126px;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: rgba(10,14,20,0.58);
+}
+
+.action-plan-step {
+  color: var(--accent);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.action-plan-title {
+  margin-top: 8px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 800;
+  line-height: 1.35;
+}
+
+.action-plan-copy {
+  margin-top: 7px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
 /* ===== Modal ===== */
 .modal-overlay {
   position: fixed;
@@ -718,6 +1652,10 @@ body::before {
   width: 90%;
   max-height: 85vh;
   overflow-y: auto;
+}
+
+#d2Modal .modal {
+  max-width: 980px;
 }
 
 .modal-header {
@@ -785,6 +1723,130 @@ body::before {
   border-radius: 3px;
   font-size: 11px;
   color: var(--text-muted);
+}
+
+.decision-workbench {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.workbench-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--border);
+  border-radius: 12px;
+  background: rgba(12,17,24,0.5);
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.workbench-section:focus-within {
+  border-color: var(--border-active);
+  background: rgba(16,23,32,0.62);
+}
+
+.workbench-section label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.wb-num {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border-radius: 7px;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--accent);
+  background: var(--accent-glow);
+  border: 1px solid rgba(246,160,77,0.3);
+}
+
+.wb-hint {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.4px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid var(--border);
+}
+
+.workbench-section.ws-facts { border-left-color: var(--accent); }
+.workbench-section.ws-goals { border-left-color: #58b7d7; }
+.workbench-section.ws-constraints { border-left-color: #ef5b68; }
+.workbench-section.ws-risks { border-left-color: #a78bfa; }
+.workbench-section.ws-evidence { border-left-color: #39d28f; }
+.workbench-section.ws-rationale { border-left-color: #7f8ea3; }
+
+.drop-zone {
+  min-height: 78px;
+  padding: 10px;
+  border: 1px dashed var(--border-active);
+  border-radius: 10px;
+  background: rgba(10,14,20,0.72);
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.drop-zone.drag-over {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.evidence-token {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  margin: 0 6px 6px 0;
+  padding: 5px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--border-active);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-family: var(--mono);
+  font-size: 11px;
+}
+
+.evidence-token button {
+  width: 16px;
+  height: 16px;
+  border: none;
+  border-radius: 50%;
+  background: var(--border);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.workbench-validation {
+  grid-column: 1 / -1;
+  padding: 10px 12px;
+  border: 1px solid rgba(239,79,94,0.3);
+  border-radius: 10px;
+  background: var(--danger-glow);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.workbench-validation.ready {
+  border-color: rgba(61,214,140,0.35);
+  background: rgba(61,214,140,0.08);
+  color: var(--success);
 }
 
 /* Report */
@@ -876,9 +1938,19 @@ body::before {
 }
 
 .empty-state-icon {
-  font-size: 48px;
+  width: 54px;
+  height: 54px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 18px;
+  font-family: var(--mono);
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--accent);
   margin-bottom: 12px;
-  opacity: 0.3;
+  opacity: 0.72;
+  background: rgba(246,160,77,0.08);
 }
 
 .empty-state-text { font-size: 14px; max-width: 280px; }
@@ -939,46 +2011,93 @@ body::before {
 .start-screen {
   position: fixed;
   inset: 0;
-  background: var(--bg-base);
+  background:
+    radial-gradient(circle at 12% 16%, rgba(246,160,77,0.16), transparent 32%),
+    radial-gradient(circle at 86% 72%, rgba(88,183,215,0.11), transparent 34%),
+    linear-gradient(135deg, #090c12 0%, #0b1119 48%, #080b10 100%);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 300;
   transition: opacity 0.5s ease;
+  overflow: hidden;
+}
+
+.start-screen::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.028) 1px, transparent 1px);
+  background-size: 54px 54px;
+  mask-image: radial-gradient(circle at center, black, transparent 76%);
+  opacity: 0.6;
 }
 
 .start-screen.hidden { opacity: 0; pointer-events: none; }
 
 .start-content {
-  text-align: center;
-  max-width: 540px;
-  padding: 40px;
+  width: min(1180px, calc(100vw - 48px));
+  min-height: min(720px, calc(100vh - 48px));
+  display: grid;
+  grid-template-columns: minmax(360px, 0.9fr) minmax(460px, 1.1fr);
+  gap: 28px;
+  align-items: stretch;
+  padding: 28px;
+  position: relative;
+  z-index: 1;
+  background: rgba(10, 15, 22, 0.72);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.08);
+  backdrop-filter: blur(22px) saturate(135%);
+  -webkit-backdrop-filter: blur(22px) saturate(135%);
+}
+
+.start-copy {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .start-logo {
   font-family: var(--mono);
-  font-size: 32px;
+  font-size: 15px;
   font-weight: 900;
   color: var(--accent);
-  letter-spacing: -1px;
-  margin-bottom: 8px;
+  letter-spacing: 0.08em;
+  margin-bottom: 18px;
   text-transform: uppercase;
 }
 
 .start-subtitle {
-  font-size: 14px;
+  font-size: clamp(32px, 3.6vw, 48px);
+  color: var(--text-primary);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.08;
+  margin-bottom: 18px;
+}
+
+.start-brief {
+  font-size: 15px;
   color: var(--text-secondary);
-  margin-bottom: 32px;
-  line-height: 1.8;
+  margin-bottom: 24px;
+  line-height: 1.75;
+  max-width: 48ch;
 }
 
 .start-scenario-card {
-  padding: 20px 24px;
-  background: var(--bg-panel);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,0.08), rgba(255,255,255,0.025)),
+    rgba(15,21,29,0.88);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 16px;
   text-align: left;
-  margin-bottom: 24px;
+  margin-bottom: 18px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
 }
 
 .start-scenario-name {
@@ -1005,6 +2124,32 @@ body::before {
   font-family: var(--mono);
 }
 
+.restore-panel {
+  display: none;
+  margin: -8px 0 20px;
+  padding: 14px 16px;
+  background: rgba(255, 154, 60, 0.08);
+  border: 1px solid rgba(255, 154, 60, 0.22);
+  border-radius: var(--radius);
+  text-align: left;
+  color: var(--text-secondary);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.restore-panel strong {
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.start-actions {
+  display: flex;
+  justify-content: flex-start;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: auto;
+}
+
 .start-btn {
   padding: 14px 40px;
   font-size: 15px;
@@ -1019,16 +2164,225 @@ body::before {
   letter-spacing: 1px;
 }
 
+.start-secondary-btn {
+  display: none;
+  padding: 14px 24px;
+  font-size: 15px;
+  font-weight: 700;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  cursor: pointer;
+  transition: all 0.2s;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 .start-btn:hover {
   background: #ffb05c;
   box-shadow: 0 0 20px var(--accent-glow);
   transform: translateY(-1px);
 }
 
+.start-secondary-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-active);
+  transform: translateY(-1px);
+}
+
+.start-ops-panel {
+  position: relative;
+  min-height: 560px;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,0.1);
+  background:
+    radial-gradient(circle at 50% 40%, rgba(246,160,77,0.15), transparent 34%),
+    linear-gradient(160deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02)),
+    rgba(8,11,16,0.88);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.start-ops-panel::before {
+  content: '';
+  position: absolute;
+  inset: 24px;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 50%;
+  box-shadow:
+    0 0 0 56px rgba(255,255,255,0.018),
+    0 0 0 112px rgba(255,255,255,0.012);
+}
+
+.mission-node {
+  position: absolute;
+  width: 150px;
+  min-height: 86px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(16,23,32,0.86);
+  box-shadow: 0 18px 42px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.08);
+}
+
+.mission-node strong {
+  display: block;
+  color: var(--text-primary);
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+.mission-node span {
+  display: block;
+  margin-top: 6px;
+  color: var(--text-muted);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.mission-node.primary {
+  width: 220px;
+  min-height: 136px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  border-color: rgba(246,160,77,0.42);
+  background: linear-gradient(145deg, rgba(246,160,77,0.16), rgba(16,23,32,0.92));
+}
+
+.mission-node.primary strong { color: var(--accent); font-size: 24px; letter-spacing: -0.02em; }
+.mission-node.n1 { left: 8%; top: 13%; }
+.mission-node.n2 { right: 9%; top: 16%; }
+.mission-node.n3 { left: 11%; bottom: 18%; }
+.mission-node.n4 { right: 12%; bottom: 16%; }
+
+.mission-flow {
+  position: absolute;
+  left: 28px;
+  right: 28px;
+  bottom: 28px;
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.mission-flow span {
+  min-height: 46px;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.mission-caption {
+  position: absolute;
+  top: 24px;
+  left: 28px;
+  right: 28px;
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.mission-caption b {
+  color: var(--text-primary);
+  font-weight: 700;
+}
+
+/* Start screen motion */
+.mission-node {
+  opacity: 0;
+  animation: nodeIn 0.55s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+@keyframes nodeIn {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.mission-node.n1 { animation-delay: 0.12s; }
+.mission-node.n2 { animation-delay: 0.24s; }
+.mission-node.n3 { animation-delay: 0.36s; }
+.mission-node.n4 { animation-delay: 0.48s; }
+.mission-node.primary {
+  animation: primaryIn 0.6s 0.05s cubic-bezier(0.22, 1, 0.36, 1) forwards, hubPulse 3.4s ease-in-out 1s infinite;
+}
+@keyframes primaryIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes hubPulse {
+  0%, 100% { border-color: rgba(246,160,77,0.42); }
+  50% { border-color: rgba(246,160,77,0.9); }
+}
+
+.start-ops-panel::before {
+  animation: ringBreathe 6s ease-in-out infinite;
+}
+@keyframes ringBreathe {
+  0%, 100% { transform: scale(0.96); opacity: 0.8; }
+  50% { transform: scale(1.03); opacity: 1; }
+}
+
+.mission-flow span {
+  opacity: 0;
+  animation: flowIn 0.5s ease forwards;
+}
+@keyframes flowIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.mission-flow span:nth-child(1) { animation-delay: 0.5s; }
+.mission-flow span:nth-child(2) { animation-delay: 0.58s; }
+.mission-flow span:nth-child(3) { animation-delay: 0.66s; }
+.mission-flow span:nth-child(4) { animation-delay: 0.74s; }
+.mission-flow span:nth-child(5) { animation-delay: 0.82s; }
+.mission-flow span:nth-child(6) { animation-delay: 0.9s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .mission-node, .mission-node.primary, .mission-flow span { opacity: 1; animation: none; }
+  .start-ops-panel::before { animation: none; }
+}
+
 /* Responsive */
 @media (max-width: 1024px) {
   .app {
     grid-template-columns: 220px 1fr 260px;
+  }
+  .start-content {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .start-ops-panel { min-height: 420px; }
+  .case-spine {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .case-spine-title { grid-column: 1 / -1; }
+  .report-page-content { padding: 22px; }
+  .report-hero-grid,
+  .report-two-col,
+  .report-diagnostic-grid,
+  .action-plan-grid,
+  .report-evidence-path {
+    grid-template-columns: 1fr;
+  }
+  .radar-panel {
+    grid-template-columns: 1fr;
+    justify-items: center;
+  }
+  .counterfactual-grid {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -1041,6 +2395,87 @@ body::before {
       "footer";
   }
   .sidebar, .info-panel { display: none; }
+  .case-spine { display: none; }
+  .decision-workbench { grid-template-columns: 1fr; }
+  .start-screen { align-items: stretch; }
+  .start-content {
+    width: 100%;
+    min-height: 100%;
+    border-radius: 0;
+    padding: 22px;
+  }
+  .start-subtitle { font-size: 34px; }
+  .start-ops-panel { display: none; }
+  .start-actions { flex-direction: column; }
+  .start-btn,
+  .start-secondary-btn { width: 100%; justify-content: center; }
+  .report-page-header {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 10px;
+    padding: 14px 18px;
+  }
+  .report-page-content { padding: 18px; }
+  .report-kpi-row,
+  .score-grid,
+  .workbench-report-grid {
+    grid-template-columns: 1fr;
+  }
+  .dimension-row {
+    grid-template-columns: 72px 1fr 38px;
+  }
+}
+
+/* ===== Premium polish ===== */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+.btn {
+  transition: all 0.2s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ffb05c, var(--accent));
+  box-shadow: 0 2px 10px rgba(246,160,77,0.18);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 4px 18px rgba(246,160,77,0.32);
+  transform: translateY(-1px);
+}
+
+.score-hero-value.high { text-shadow: 0 0 32px rgba(57,210,143,0.35); }
+.score-hero-value.mid { text-shadow: 0 0 32px rgba(246,160,77,0.35); }
+.score-hero-value.low { text-shadow: 0 0 32px rgba(239,91,104,0.35); }
+
+.report-section-title::after {
+  content: '';
+  display: block;
+  width: 34px;
+  height: 2px;
+  margin-top: 6px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, var(--accent), transparent);
+}
+
+.fact-card {
+  transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.fact-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(0,0,0,0.28);
+}
+
+.role-card {
+  transition: all 0.2s ease;
+}
+
+.role-card.active {
+  box-shadow: inset 2px 0 0 var(--accent), 0 4px 14px rgba(0,0,0,0.24);
 }
 
 /* ===== Print / PDF Export ===== */
@@ -1152,6 +2587,17 @@ body::before {
   .counterfactual-option { color: #1a1a1a !important; }
   .counterfactual-result { color: #555 !important; }
 
+  .diagnostic-card, .action-plan-item, .report-path-card {
+    background: #fafafa !important;
+    border: 1px solid #ddd !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+    break-inside: avoid;
+  }
+  .diagnostic-copy, .diagnostic-meta, .action-plan-copy, .report-path-bridge {
+    color: #555 !important;
+  }
+
   .breadcrumb-signal, .stance-conflict, .cross-role-ref, .repeat-badge { display: none !important; }
 
   /* Page setup */
@@ -1161,7 +2607,7 @@ body::before {
   }
 
   /* Avoid breaking inside cards */
-  .score-card, .evidence-item, .suggestion-item, .counterfactual-item {
+  .score-card, .evidence-item, .suggestion-item, .counterfactual-item, .diagnostic-card, .action-plan-item, .report-path-card {
     break-inside: avoid;
   }
 }
@@ -1172,13 +2618,42 @@ body::before {
 <!-- Start Screen -->
 <div class="start-screen" id="startScreen">
   <div class="start-content">
-    <div class="start-logo">CareerCraft</div>
-    <div class="start-subtitle">项目决策模拟器 · 复杂项目决策实训平台</div>
-    <div class="start-scenario-card" id="scenarioCard">
-      <div class="start-scenario-name">加载中...</div>
-      <div class="start-scenario-desc">正在获取场景信息</div>
-    </div>
-    <button class="start-btn" id="startBtn" disabled>开始模拟</button>
+    <section class="start-copy">
+      <div class="start-logo">CareerCraft 决策训练系统</div>
+      <div class="start-subtitle">星盘结算上线指挥舱</div>
+      <div class="start-brief">一场面向项目负责人的高压上线演练：访谈关键角色、搭建证据链，完成可追溯决策。</div>
+      <div class="start-scenario-card" id="scenarioCard">
+        <div class="start-scenario-name">加载中...</div>
+        <div class="start-scenario-desc">正在获取场景信息</div>
+      </div>
+      <div class="restore-panel" id="restorePanel"></div>
+      <div class="start-actions">
+        <button class="start-btn" id="startBtn" disabled>开始模拟</button>
+      <button class="start-secondary-btn" id="restartBtn" type="button">重新开始</button>
+      </div>
+    </section>
+    <section class="start-ops-panel" aria-label="决策训练操作面板">
+      <div class="mission-caption">
+        <span><b>智能协同训练</b></span>
+        <span>上线前夜专题</span>
+      </div>
+      <div class="mission-node primary">
+        <strong>决策窗口</strong>
+        <span>在有限时间内完成信息获取、风险判断与上线方案。</span>
+      </div>
+      <div class="mission-node n1"><strong>角色访谈</strong><span>从不同立场获取线索</span></div>
+      <div class="mission-node n2"><strong>证据图谱</strong><span>将零散信息连接成判断</span></div>
+      <div class="mission-node n3"><strong>风险沙盘</strong><span>对比上线、灰度、延期后果</span></div>
+      <div class="mission-node n4"><strong>复盘教练</strong><span>生成能力画像与迁移建议</span></div>
+      <div class="mission-flow">
+        <span>定位信息源</span>
+        <span>主动访谈</span>
+        <span>交叉验证</span>
+        <span>结构建模</span>
+        <span>风险取舍</span>
+        <span>证据复盘</span>
+      </div>
+    </section>
   </div>
 </div>
 
@@ -1211,6 +2686,11 @@ body::before {
         <div class="pulse"></div>
         <span id="connText">已连接</span>
       </div>
+      <div class="budget-chip" id="budgetChip">
+        <span>窗口</span>
+        <strong id="budgetRemaining">40</strong>
+        <span>min</span>
+      </div>
     </div>
   </header>
 
@@ -1222,9 +2702,19 @@ body::before {
 
   <!-- Chat Area -->
   <main class="chat-area">
+    <section class="case-spine">
+      <div class="case-spine-title">
+        <strong>星盘结算训练路径</strong>
+        <span>从访谈线索到上线决策，系统持续沉淀证据链。</span>
+      </div>
+      <div class="case-spine-metric"><b id="spineRoles">访谈网络</b><span>关键角色</span></div>
+      <div class="case-spine-metric"><b id="spineFacts">证据图谱</b><span>线索沉淀</span></div>
+      <div class="case-spine-metric"><b id="spineConstraints">风险边界</b><span>决策校验</span></div>
+      <div class="case-spine-metric"><b id="spineWorkbench">待完善</b><span>决策工作台</span></div>
+    </section>
     <div class="chat-messages" id="chatMessages">
       <div class="empty-state" id="chatEmpty">
-        <div class="empty-state-icon">💬</div>
+        <div class="empty-state-icon">Q</div>
         <div class="empty-state-text">选择左侧干系人开始访谈，获取决策所需信息</div>
       </div>
     </div>
@@ -1248,13 +2738,80 @@ body::before {
 
   <!-- Info Panel -->
   <aside class="info-panel">
+    <section class="budget-panel">
+      <div class="panel-kicker">决策行动窗口</div>
+      <div class="budget-gauge">
+        <svg class="budget-ring" viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="budget-ring-track" cx="60" cy="60" r="50"></circle>
+          <circle class="budget-ring-fg" id="budgetRingFg" cx="60" cy="60" r="50"></circle>
+        </svg>
+        <div class="budget-ring-center">
+          <span class="budget-ring-num" id="budgetPanelRemaining">40</span>
+          <small>剩余 / <span id="budgetPanelTotal">40</span> min</small>
+        </div>
+      </div>
+      <div class="budget-hint" id="budgetHint">每次访谈都会占用窗口时间。优先级越清晰，证据链越完整。</div>
+    </section>
+    <section class="coach-panel">
+      <div class="coach-title">
+        <span>访谈教练</span>
+        <span class="info-count" id="coachStatus">待启动</span>
+      </div>
+      <div class="coach-note strong" id="coachPrimary">先选择关键角色，围绕触发条件、修复进展、灰度方案和回滚能力提问。</div>
+      <div class="coach-note" id="coachSecondary">把获得的线索拖入决策工作台，形成可追溯的证据链。</div>
+    </section>
+    <section class="demo-panel">
+      <div class="coach-title">
+        <span>演示路线</span>
+        <span class="info-count" id="demoProgress">1/10</span>
+      </div>
+      <div class="demo-step-meta">
+        <span id="demoStage">准备访谈</span>
+        <span id="demoTarget">闻笛</span>
+      </div>
+      <div class="demo-step-title" id="demoTitle">先问 QA，拿质量风险</div>
+      <div class="demo-step-copy" id="demoCopy">点击“准备本步”会选中角色并填入推荐问题。</div>
+      <div class="demo-action-row">
+        <button class="demo-btn primary" id="demoPrepareBtn" type="button">准备本步</button>
+        <button class="demo-btn" id="demoDoneBtn" type="button">标记完成</button>
+      </div>
+      <button class="demo-btn" id="demoResetBtn" type="button">重置路线</button>
+    </section>
+    <section class="workspace-panel">
+      <div class="info-title compact">
+        <span>决策工作台</span>
+        <span class="info-count" id="workbenchCount">待完善</span>
+      </div>
+      <div class="workspace-mini-grid" id="workspaceMiniGrid">
+        <div class="workspace-mini missing" data-field="facts">关键线索</div>
+        <div class="workspace-mini missing" data-field="goals">目标</div>
+        <div class="workspace-mini missing" data-field="constraints">决策边界</div>
+        <div class="workspace-mini missing" data-field="option">方案</div>
+        <div class="workspace-mini missing" data-field="risks">风险</div>
+        <div class="workspace-mini missing" data-field="evidence_refs">证据引用</div>
+      </div>
+    </section>
+    <section class="evidence-network-panel">
+      <div class="coach-title">
+        <span>关系图谱</span>
+        <span class="info-count" id="networkStatus">待点亮</span>
+      </div>
+      <div class="network-filter-row">
+        <button class="network-filter-btn active" id="networkAllBtn" type="button" onclick="selectEvidenceRole('ALL')">全部线索</button>
+        <button class="network-filter-btn" id="networkRiskBtn" type="button" onclick="selectEvidenceRole('RISK')">关键风险</button>
+      </div>
+      <button class="network-action-btn" id="networkAddBtn" type="button" onclick="addFilteredEvidenceToWorkbench()">加入当前筛选到引用</button>
+      <div class="evidence-network-grid" id="evidenceNetworkGrid"></div>
+      <div class="evidence-network-summary" id="evidenceNetworkSummary">访谈开始后，系统会按角色来源点亮证据覆盖，帮助你判断下一步该问谁。</div>
+      <div class="evidence-path-list" id="evidencePathList"></div>
+    </section>
     <div class="info-title">
-      <span>已获取事实</span>
-      <span class="info-count" id="factCount">0 / 17</span>
+      <span>证据图谱</span>
+      <span class="info-count" id="factCount">持续更新</span>
     </div>
     <div class="fact-list" id="factList">
       <div class="empty-state" style="padding: 20px; font-size: 12px;">
-        <div class="empty-state-text">访谈干系人后，获取的事实将显示在这里</div>
+        <div class="empty-state-text">访谈后，关键线索会沉淀到这里。</div>
       </div>
     </div>
   </aside>
@@ -1304,9 +2861,32 @@ body::before {
     </div>
     <div class="modal-body">
       <div class="decision-options" id="d2Options"></div>
-      <div style="margin-top: 16px;">
-        <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">决策依据（选填）</div>
-        <textarea class="reflection-input" id="d2Rationale" placeholder="简述你的决策依据，引用具体事实编号..." style="min-height: 60px;"></textarea>
+      <div class="decision-workbench">
+        <div class="workbench-section ws-facts">
+          <label><span class="wb-num">01</span>关键线索<span class="wb-hint">证据</span></label>
+          <div class="drop-zone" data-workbench-field="facts" id="wbFacts">把线索拖到这里，或点击右侧证据卡加入</div>
+        </div>
+        <div class="workbench-section ws-goals">
+          <label><span class="wb-num">02</span>目标<span class="wb-hint">方向</span></label>
+          <textarea class="reflection-input" id="wbGoals" placeholder="例如：按时上线活动，同时避免触发支付事故"></textarea>
+        </div>
+        <div class="workbench-section ws-constraints">
+          <label><span class="wb-num">03</span>决策边界<span class="wb-hint">不可退让</span></label>
+          <textarea class="reflection-input" id="wbConstraints" placeholder="例如：活动不可取消；止血时间小于15分钟；证据链需要可追溯"></textarea>
+        </div>
+        <div class="workbench-section ws-risks">
+          <label><span class="wb-num">04</span>风险<span class="wb-hint">监控点</span></label>
+          <textarea class="reflection-input" id="wbRisks" placeholder="列出方案仍然存在的风险和监控点"></textarea>
+        </div>
+        <div class="workbench-section ws-evidence">
+          <label><span class="wb-num">05</span>证据引用<span class="wb-hint">可溯源</span></label>
+          <div class="drop-zone" data-workbench-field="evidence_refs" id="wbEvidence">引用已掌握的关键线索</div>
+        </div>
+        <div class="workbench-section ws-rationale">
+          <label><span class="wb-num">06</span>决策依据<span class="wb-hint">取舍逻辑</span></label>
+          <textarea class="reflection-input" id="d2Rationale" placeholder="用一段话解释你的取舍逻辑"></textarea>
+        </div>
+        <div class="workbench-validation" id="workbenchValidation">请完善决策结构后提交 D2。</div>
       </div>
     </div>
     <div class="modal-footer">
@@ -1342,7 +2922,7 @@ body::before {
       <div class="modal-subtitle">回顾你的决策过程，什么做得好？什么可以改进？</div>
     </div>
     <div class="modal-body">
-      <textarea class="reflection-input" id="reflectionText" placeholder="例如：我在 D1 阶段没有追问 QA 关于触发阈值的具体数据，导致 D2 时缺乏关键证据。下次我会用结构化提问清单，确保每个红线事实都有明确的来源和验证..." style="min-height: 140px;"></textarea>
+      <textarea class="reflection-input" id="reflectionText" placeholder="例如：我在 D1 阶段没有追问 QA 关于触发阈值的具体数据，导致 D2 时缺乏关键证据。下次我会用结构化提问清单，确保每个关键风险都有明确来源和交叉验证。" style="min-height: 140px;"></textarea>
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeModal('reflectionModal')">取消</button>
@@ -1356,7 +2936,8 @@ body::before {
 
 <script>
 // ============ Configuration ============
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = `${window.location.origin}/api`;
+const STORAGE_KEY = 'careercraft.pm-simulator.progress.v1';
 let sessionId = null;
 let selectedRoleId = null;
 let phase = 'interview'; // interview -> d1 -> d2 -> report
@@ -1366,6 +2947,38 @@ let factsData = [];
 let stateData = null;
 let selectedD1 = null;
 let selectedD2 = null;
+let demoStepIndex = 0;
+let selectedEvidenceRole = 'ALL';
+let evidencePathEvents = [];
+let workbench = {
+  facts: [],
+  goals: [],
+  constraints: [],
+  risks: [],
+  evidence_refs: [],
+};
+let pendingSavedProgress = null;
+
+const DEMO_STEPS = [
+  { type: 'question', stage: '质量风险', target: '闻笛', roleId: 'R2', title: '先问 QA，拿质量风险', guide: '展示问对角色后，质量风险会从对话中浮现，并进入证据图谱。', prompt: '作为项目负责人，我需要评估灰度比例的安全性。缺陷的触发阈值、复现条件和QA结论是什么？' },
+  { type: 'question', stage: '应急能力', target: '沈屹', roleId: 'R1', title: '问技术，验证回滚与灰度能力', guide: '展示质量风险需要被技术应急能力交叉验证。', prompt: '作为项目负责人，我需要评估应急预案。新引擎如果异常，回滚和切回老引擎需要多久？' },
+  { type: 'question', stage: '商业约束', target: '江照', roleId: 'R3', title: '问运营，获得活动约束', guide: '展示项目决策不仅是技术判断，还要兼顾活动承诺和用户体验。', prompt: '作为项目负责人，我需要平衡活动目标。延期会损失什么，活动页有没有折中方案？' },
+  { type: 'question', stage: '战略总账', target: '许可', roleId: 'R4', title: '问 CEO，补足高层变量', guide: '展示同一损失在高层视角下还有隐性代价和战略窗口。', prompt: '运营说延期直接损失80万，我需要算完整总账。80万是不是全部代价？竞品窗口有什么压力？' },
+  { type: 'd1', stage: '中间决策', target: 'D1', title: '提交 D1，选择灰度准备', guide: '展示 D1 是资源投向，灰度准备会补充关键线索。' },
+  { type: 'question', stage: '收束验证', target: '闻笛', roleId: 'R2', title: '回到 QA，确认灰度边界', guide: '展示学生开始用已知证据收束问题，而不是漫无目的继续问。', prompt: '基于QPS阈值和预估峰值，灰度比例控制到多少比较安全？今天QA实际回归产能够吗？' },
+  { type: 'question', stage: '战略确认', target: '许可', roleId: 'R4', title: '确认竞品窗口', guide: '展示最后一问用于补战略盲区，行动窗口接近收束。', prompt: '为了和高层对齐战略窗口，请确认竞品下周是否会上线同类功能？' },
+  { type: 'd2', stage: '最终决策', target: '工作台', title: '预填 D2 六要素工作台', guide: '展示最终决策必须结构化，不是只点一个方案。' },
+  { type: 'report', stage: '复盘报告', target: '报告', title: '查看复盘报告', guide: '展示评分、证据图谱、反事实和决策边界校验。' },
+  { type: 'reflection', stage: '成长迁移', target: '反思', title: '提交成长反思', guide: '展示复盘不是结束，而是能力迁移的最后一环。' },
+];
+
+const DEMO_WORKBENCH_TEXT = {
+  goals: '保障支付链路稳定\n保留活动收益\n为后续放量保留数据依据',
+  constraints: '活动不可取消\n异常需快速止血\n灰度比例必须低于风险承受范围',
+  risks: '缺陷在高峰流量下触发\n回归覆盖不足\n延期损失与竞品窗口',
+  rationale: '选择中低比例灰度，不全量冒险，也不直接延期。依据来自 QA 阈值、技术回滚、运营损失和 CEO 战略窗口。若监控出现异常，立即切回老引擎并启动客服预案。',
+  reflection: '我一开始容易只围绕缺陷本身追问，但本次决策真正需要同时验证技术阈值、回滚能力、商业损失和战略窗口。更好的做法是先锁定关键信息源，再用已获得的证据跨角色验证，最后把事实、目标、边界、方案、风险和证据引用放进同一个决策结构。下次遇到类似上线风险，我会先建立证据清单，优先追问会改变决策方向的变量。',
+};
 
 // ============ API Helpers ============
 async function api(path, method = 'GET', body = null) {
@@ -1392,18 +3005,254 @@ async function api(path, method = 'GET', body = null) {
   }
 }
 
+// ============ Local Progress ============
+function readSavedProgress() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (err) {
+    localStorage.removeItem(STORAGE_KEY);
+    return null;
+  }
+}
+
+function clearSavedProgress() {
+  localStorage.removeItem(STORAGE_KEY);
+  pendingSavedProgress = null;
+}
+
+function getDraftInputs() {
+  return {
+    goals: document.getElementById('wbGoals')?.value || '',
+    constraints: document.getElementById('wbConstraints')?.value || '',
+    risks: document.getElementById('wbRisks')?.value || '',
+    rationale: document.getElementById('d2Rationale')?.value || '',
+    chatInput: document.getElementById('chatInput')?.value || '',
+  };
+}
+
+function setDraftInputs(draft = {}) {
+  const map = {
+    wbGoals: draft.goals,
+    wbConstraints: draft.constraints,
+    wbRisks: draft.risks,
+    d2Rationale: draft.rationale,
+    chatInput: draft.chatInput,
+  };
+  Object.entries(map).forEach(([id, value]) => {
+    const el = document.getElementById(id);
+    if (el && value !== undefined) el.value = value;
+  });
+}
+
+function saveProgress() {
+  if (!sessionId) return;
+  const payload = {
+    sessionId,
+    phase,
+    selectedRoleId,
+    selectedD1,
+    selectedD2,
+    demoStepIndex,
+    selectedEvidenceRole,
+    evidencePathEvents: evidencePathEvents.slice(-12),
+    workbench: {
+      facts: workbench.facts.slice(),
+      goals: workbench.goals.slice(),
+      constraints: workbench.constraints.slice(),
+      risks: workbench.risks.slice(),
+      evidence_refs: workbench.evidence_refs.slice(),
+    },
+    draft: getDraftInputs(),
+    updatedAt: new Date().toISOString(),
+  };
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
+}
+
+function getPhaseLabel(value) {
+  return ({ interview: '信息收集', d1: 'D1 决策', d2: 'D2 决策', report: '复盘' })[value] || '信息收集';
+}
+
+function renderRestorePanel(saved) {
+  const panel = document.getElementById('restorePanel');
+  const restart = document.getElementById('restartBtn');
+  if (!panel || !restart || !saved) return;
+  const time = saved.updatedAt ? new Date(saved.updatedAt) : null;
+  const timeText = time && !Number.isNaN(time.getTime())
+    ? `${String(time.getMonth() + 1).padStart(2, '0')}-${String(time.getDate()).padStart(2, '0')} ${String(time.getHours()).padStart(2, '0')}:${String(time.getMinutes()).padStart(2, '0')}`
+    : '刚刚';
+  panel.style.display = 'block';
+  panel.innerHTML = `<strong>检测到未完成训练</strong><br>阶段：${getPhaseLabel(saved.phase)}，工作台证据 ${saved.workbench?.evidence_refs?.length || 0} 条，上次保存 ${timeText}`;
+  restart.style.display = 'inline-flex';
+  document.getElementById('startBtn').textContent = '恢复训练';
+}
+
+async function prepareSavedProgress() {
+  const saved = readSavedProgress();
+  if (!saved?.sessionId) return;
+  try {
+    await api(`/sessions/${saved.sessionId}`);
+    pendingSavedProgress = saved;
+    renderRestorePanel(saved);
+  } catch (err) {
+    clearSavedProgress();
+  }
+}
+
+function applySavedProgress(saved) {
+  if (!saved) return;
+  selectedRoleId = saved.selectedRoleId || null;
+  selectedD1 = saved.selectedD1 || null;
+  selectedD2 = saved.selectedD2 || null;
+  demoStepIndex = Number.isInteger(saved.demoStepIndex) ? saved.demoStepIndex : 0;
+  selectedEvidenceRole = saved.selectedEvidenceRole || 'ALL';
+  evidencePathEvents = Array.isArray(saved.evidencePathEvents) ? saved.evidencePathEvents : [];
+  workbench = Object.assign({
+    facts: [],
+    goals: [],
+    constraints: [],
+    risks: [],
+    evidence_refs: [],
+  }, saved.workbench || {});
+  setDraftInputs(saved.draft || {});
+  renderWorkbenchDrops();
+  updateWorkbenchStatus();
+  renderDemoGuide();
+  if (selectedRoleId) {
+    document.querySelector(`.role-card[data-role="${selectedRoleId}"]`)?.classList.add('active');
+    document.getElementById('quickPrompts').style.display = 'flex';
+  }
+  if (saved.phase) updatePhase(saved.phase);
+}
+
+function showAppShell() {
+  document.getElementById('startScreen').classList.add('hidden');
+  document.getElementById('app').style.display = 'grid';
+  setTimeout(() => document.getElementById('startScreen')?.remove(), 500);
+  renderDemoGuide();
+}
+
+// ============ Demo Guide ============
+function getCurrentDemoStep() {
+  return demoStepIndex >= DEMO_STEPS.length ? null : DEMO_STEPS[demoStepIndex];
+}
+
+function renderDemoGuide() {
+  const step = getCurrentDemoStep();
+  const progress = document.getElementById('demoProgress');
+  const stage = document.getElementById('demoStage');
+  const target = document.getElementById('demoTarget');
+  const title = document.getElementById('demoTitle');
+  const copy = document.getElementById('demoCopy');
+  const prepare = document.getElementById('demoPrepareBtn');
+  if (!progress || !stage || !target || !title || !copy || !prepare) return;
+  if (!step) {
+    progress.textContent = `${DEMO_STEPS.length}/${DEMO_STEPS.length}`;
+    stage.textContent = '完成';
+    target.textContent = '复盘';
+    title.textContent = '演示路线已完成';
+    copy.textContent = '你已经跑完从访谈、证据、D1、D2、报告到成长反思的完整闭环。';
+    prepare.textContent = '已完成';
+    prepare.disabled = true;
+    return;
+  }
+  prepare.disabled = false;
+  progress.textContent = `${demoStepIndex + 1}/${DEMO_STEPS.length}`;
+  stage.textContent = step.stage;
+  target.textContent = step.target;
+  title.textContent = step.title;
+  copy.textContent = step.guide;
+  prepare.textContent = step.type === 'question'
+    ? '填入提问'
+    : step.type === 'd1'
+      ? '打开 D1'
+      : step.type === 'd2'
+        ? '预填工作台'
+        : step.type === 'report'
+          ? '查看报告'
+          : '填入反思';
+}
+
+function advanceDemoStep() {
+  demoStepIndex = Math.min(DEMO_STEPS.length, demoStepIndex + 1);
+  renderDemoGuide();
+  saveProgress();
+}
+
+function resetDemoGuide() {
+  demoStepIndex = 0;
+  renderDemoGuide();
+  saveProgress();
+  showToast('演示路线已重置', 'success');
+}
+
+function prepareDemoStep() {
+  const step = getCurrentDemoStep();
+  if (!step) return;
+
+  if (step.type === 'question') {
+    selectRole(step.roleId);
+    const input = document.getElementById('chatInput');
+    input.value = step.prompt;
+    input.style.height = 'auto';
+    input.style.height = Math.min(input.scrollHeight, 120) + 'px';
+    input.focus();
+    document.getElementById('sendBtn').disabled = !!stateData?.budget?.exhausted;
+    showToast('已填入推荐提问，点击发送继续', 'success');
+    saveProgress();
+    return;
+  }
+
+  if (step.type === 'd1') {
+    showD1Modal();
+    selectD1('B_灰度准备');
+    showToast('已选中灰度准备，确认后继续', 'success');
+    return;
+  }
+
+  if (step.type === 'd2') {
+    showD2Modal();
+    selectD2('Limited_20%');
+    document.getElementById('wbGoals').value = DEMO_WORKBENCH_TEXT.goals;
+    document.getElementById('wbConstraints').value = DEMO_WORKBENCH_TEXT.constraints;
+    document.getElementById('wbRisks').value = DEMO_WORKBENCH_TEXT.risks;
+    document.getElementById('d2Rationale').value = DEMO_WORKBENCH_TEXT.rationale;
+    const ids = (factsData?.acquired || []).map(f => f.id).slice(0, 6);
+    workbench.facts = Array.from(new Set([...workbench.facts, ...ids]));
+    workbench.evidence_refs = Array.from(new Set([...workbench.evidence_refs, ...ids]));
+    renderWorkbenchDrops();
+    renderFacts();
+    updateWorkbenchStatus();
+    saveProgress();
+    showToast('工作台已预填，请检查后提交', 'success');
+    return;
+  }
+
+  if (step.type === 'report') {
+    showReport();
+    return;
+  }
+
+  if (step.type === 'reflection') {
+    document.getElementById('reflectionModal').classList.add('active');
+    document.getElementById('reflectionText').value = DEMO_WORKBENCH_TEXT.reflection;
+    showToast('已填入成长反思，提交后刷新报告', 'success');
+  }
+}
+
 // ============ Initialize ============
 async function init() {
   try {
     // Check server health
     const health = await api('/health');
-    updateConnectionStatus(health.llmEnabled);
+    updateConnectionStatus(true, health);
 
     // Load scenario
     const scenario = await api('/scenario');
     scenarioData = scenario;
     renderScenarioCard(scenario);
     document.getElementById('startBtn').disabled = false;
+    await prepareSavedProgress();
   } catch (err) {
     document.querySelector('.start-scenario-name').textContent = '连接失败';
     document.querySelector('.start-scenario-desc').textContent = '请确认后端服务已启动 (npm start)';
@@ -1415,18 +3264,59 @@ async function init() {
 
 function renderScenarioCard(scenario) {
   const card = document.getElementById('scenarioCard');
+  const demoBrief = '明早 09:00 前，「星盘结算」将配合市场活动上线。你将以项目负责人身份，在有限行动窗口内访谈关键角色，判断风险、组织证据，并提交上线方案。';
   card.innerHTML = `
     <div class="start-scenario-name">${scenario.scenarioName}</div>
-    <div class="start-scenario-desc">${scenario.description}</div>
+    <div class="start-scenario-desc">${demoBrief}</div>
     <div class="start-scenario-meta">
-      <span>版本 v${scenario.version}</span>
-      <span>窗口 ${scenario.timeline.simulated_window_hours}h</span>
-      <span>预算 ${scenario.timeline.real_time_budget_minutes}min</span>
+      <span>上线窗口 ${scenario.timeline.simulated_window_hours}h</span>
+      <span>行动窗口 ${scenario.timeline.real_time_budget_minutes}min</span>
+      <span>证据化复盘</span>
     </div>
   `;
+  updateScenarioSpine(scenario);
+}
+
+function updateScenarioSpine(scenario) {
+  if (!scenario) return;
+  if (document.getElementById('spineRoles')) document.getElementById('spineRoles').textContent = '访谈网络';
+  if (document.getElementById('spineFacts')) document.getElementById('spineFacts').textContent = '证据图谱';
+  if (document.getElementById('spineConstraints')) document.getElementById('spineConstraints').textContent = '风险边界';
 }
 
 // ============ Start Session ============
+async function handleStartAction() {
+  if (pendingSavedProgress) {
+    await restoreSession(pendingSavedProgress);
+  } else {
+    await startSession();
+  }
+}
+
+async function restartSession() {
+  clearSavedProgress();
+  await startSession();
+}
+
+async function restoreSession(saved) {
+  try {
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('startBtn').textContent = '正在恢复...';
+    sessionId = saved.sessionId;
+    await loadRoles();
+    renderRoles();
+    await refreshState();
+    applySavedProgress(saved);
+    showAppShell();
+    addSystemMessage(`已恢复上次训练 · 当前阶段：${getPhaseLabel(phase)}`);
+    showToast('训练进度已恢复', 'success');
+  } catch (err) {
+    clearSavedProgress();
+    showToast('存档已失效，正在重新开始', 'error');
+    await startSession();
+  }
+}
+
 async function startSession() {
   try {
     document.getElementById('startBtn').disabled = true;
@@ -1435,20 +3325,20 @@ async function startSession() {
     const data = await api('/sessions', 'POST', { studentId: 'demo_user' });
     sessionId = data.sessionId;
     scenarioData.roles = data.roles;
-    stateData = { acquiredFacts: data.initialFacts, d1Choice: null, d2Decision: null };
+    stateData = { acquiredFacts: data.initialFacts, d1Choice: null, d2Decision: null, budget: data.budget };
 
     // Load roles
     await loadRoles();
     renderRoles();
-    renderFacts();
+    updateBudgetUI(data.budget);
+    await refreshState();
+    saveProgress();
 
     // Show app
-    document.getElementById('startScreen').classList.add('hidden');
-    document.getElementById('app').style.display = 'grid';
-    setTimeout(() => document.getElementById('startScreen').remove(), 500);
+    showAppShell();
 
     // Add system message
-    addSystemMessage(`会话已创建 · ${data.scenarioName} · ${data.roles.length} 位干系人等待你的访谈`);
+    addSystemMessage(`训练舱已就绪：${data.scenarioName}，关键角色等待你的访谈`);
 
     showToast('会话已启动，开始访谈吧', 'success');
   } catch (err) {
@@ -1508,11 +3398,12 @@ const tierLabels = {
 function selectRole(roleId) {
   selectedRoleId = roleId;
   document.querySelectorAll('.role-card').forEach(c => c.classList.toggle('active', c.dataset.role === roleId));
-  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('sendBtn').disabled = !!stateData?.budget?.exhausted;
   document.getElementById('quickPrompts').style.display = 'flex';
 
   const role = rolesData.find(r => r.id === roleId);
   addSystemMessage(`已选择 ${role.name}（${role.title}）开始访谈`);
+  saveProgress();
 }
 
 // ============ Chat ============
@@ -1540,12 +3431,15 @@ async function sendMessage() {
 
     removeMessage(loadingId);
 
+    const latestBudgetEvent = result.budget?.events?.[result.budget.events.length - 1] || null;
+
     // Add role response
     addChatMessage('role', result.response, selectedRoleId, {
       actionType: result.actionType,
       intentSource: result.intentSource,
       disclosedFacts: result.disclosedFacts,
       disclosureDetails: result.disclosureDetails,
+      budgetCost: latestBudgetEvent?.actualCost,
       stanceConflicts: result.stanceConflicts,
       breadcrumbSignals: result.breadcrumbSignals,
       crossRoleReferences: result.crossRoleReferences,
@@ -1554,6 +3448,12 @@ async function sendMessage() {
       isLowTrust: result.isLowTrust,
       conflictAcknowledged: result.conflictAcknowledged,
     });
+    recordEvidencePathEvents(result, selectedRoleId);
+    updateInterviewCoach(result);
+    updateBudgetUI(result.budget);
+    if (result.budget?.exhausted) {
+      addSystemMessage('行动窗口已用尽，请基于已有证据进入 D1/D2 决策。');
+    }
 
     // Update state
     if (result.acquiredFactsCount !== undefined) {
@@ -1562,12 +3462,17 @@ async function sendMessage() {
 
     // Update roles (trust levels may change)
     await refreshRoles();
+    const currentDemo = getCurrentDemoStep();
+    if (currentDemo?.type === 'question' && currentDemo.roleId === selectedRoleId && currentDemo.prompt === msg) {
+      advanceDemoStep();
+    }
+    saveProgress();
   } catch (err) {
     removeMessage(loadingId);
     addSystemMessage(`消息发送失败: ${err.message}`);
   }
 
-  document.getElementById('sendBtn').disabled = false;
+  document.getElementById('sendBtn').disabled = !!stateData?.budget?.exhausted;
 }
 
 function addChatMessage(type, text, avatarId, meta = {}) {
@@ -1587,14 +3492,21 @@ function addChatMessage(type, text, avatarId, meta = {}) {
   const metaHtml = meta.actionType ? `
     <div class="message-meta">
       <span>${rolesData.find(r => r.id === avatarId)?.name || ''}</span>
-      <span class="intent-tag ${meta.intentSource || 'keyword'}">${intentLabels[meta.actionType] || meta.actionType}</span>
-      <span>via ${meta.intentSource || 'keyword'}</span>
+      <span class="intent-tag ${getIntentSourceClass(meta.intentSource)}">${intentLabels[meta.actionType] || meta.actionType}</span>
       ${repeatBadge}
       ${conflictAckBadge}
       ${outOfScopeBadge}
       ${lowTrustBadge}
     </div>
   ` : '';
+
+  const signalChips = [];
+  if (meta.budgetCost) signalChips.push(`<span class="signal-chip">行动窗口 -${meta.budgetCost} min</span>`);
+  if (meta.disclosedFacts?.length) signalChips.push(`<span class="signal-chip strong">新增线索 ${meta.disclosedFacts.length} 条</span>`);
+  if (meta.crossRoleReferences?.length) signalChips.push('<span class="signal-chip strong">形成交叉验证</span>');
+  if (meta.isRepeat) signalChips.push('<span class="signal-chip risk">重复追问</span>');
+  if (meta.isLowTrust) signalChips.push('<span class="signal-chip risk">需要建立信任</span>');
+  const signalHtml = signalChips.length ? `<div class="signal-strip">${signalChips.join('')}</div>` : '';
 
   let factHtml = '';
   if (meta.disclosureDetails && meta.disclosureDetails.length > 0) {
@@ -1604,8 +3516,8 @@ function addChatMessage(type, text, avatarId, meta = {}) {
       const isRedLine = ['F-04','F-06','F-08','F-11','F-12','F-14','F-15','F-17'].includes(f.id);
       return `
         <div class="fact-disclosure ${isRedLine ? 'red-line' : ''}">
-          <span class="fact-id">[${f.id}]</span> ${escapeHtml(f.content)}
-          ${isRedLine ? '<span style="color:var(--danger); margin-left:6px;">红线</span>' : ''}
+          <span class="fact-id">线索入库 [${f.id}]</span> ${escapeHtml(f.content)}
+          ${isRedLine ? '<span style="color:var(--danger); margin-left:6px;">关键风险</span>' : ''}
         </div>
       `;
     }).join('');
@@ -1621,7 +3533,7 @@ function addChatMessage(type, text, avatarId, meta = {}) {
   let conflictHtml = '';
   if (meta.stanceConflicts && meta.stanceConflicts.length > 0) {
     conflictHtml = meta.stanceConflicts.map(c => `
-      <div class="stance-conflict">立场冲突: ${escapeHtml(c.factContent || c.description || JSON.stringify(c))} — 角色调整了态度</div>
+      <div class="stance-conflict">立场冲突: ${escapeHtml(c.factContent || c.description || JSON.stringify(c))}，角色调整了态度</div>
     `).join('');
   }
 
@@ -1629,7 +3541,7 @@ function addChatMessage(type, text, avatarId, meta = {}) {
   if (meta.crossRoleReferences && meta.crossRoleReferences.length > 0) {
     const roleNames = { R1: '沈屹', R2: '闻笛', R3: '江照', R4: '许可' };
     crossRoleHtml = meta.crossRoleReferences.map(r => `
-      <div class="cross-role-ref">跨角色引用: [${r.factId}] 来自 ${roleNames[r.fromRole] || r.fromRole} — 角色对此做出针对性反应</div>
+      <div class="cross-role-ref">跨角色引用: [${r.factId}] 来自 ${roleNames[r.fromRole] || r.fromRole}，角色对此做出针对性反应</div>
     `).join('');
   }
 
@@ -1639,7 +3551,7 @@ function addChatMessage(type, text, avatarId, meta = {}) {
     <div class="message-avatar ${avatarClass}">${type === 'user' ? avatarText : ''}</div>
     <div>
       ${metaHtml}
-      <div class="message-bubble">${escapeHtml(text)}${factHtml}${breadcrumbHtml}${conflictHtml}${crossRoleHtml}</div>
+      <div class="message-bubble">${escapeHtml(text)}${signalHtml}${factHtml}${breadcrumbHtml}${conflictHtml}${crossRoleHtml}</div>
     </div>
   `;
   container.appendChild(msgEl);
@@ -1694,12 +3606,85 @@ const intentLabels = {
   out_of_scope_questioning: '超纲提问',
 };
 
+function getIntentSourceClass(source) {
+  return source === 'llm' ? 'llm' : 'detected';
+}
+
+function getAccessLabel(level) {
+  const labels = {
+    L0: '公开',
+    L1: '线索',
+    L2: '关键',
+    L3: '深层',
+  };
+  return labels[level] || '线索';
+}
+
+function getHolderLabel(holder) {
+  const labels = {
+    ALL: '公开背景',
+    R1: '沈屹',
+    R2: '闻笛',
+    R3: '江照',
+    R4: '许可',
+  };
+  return labels[holder] || holder || '未知';
+}
+
+function updateInterviewCoach(result = {}) {
+  const status = document.getElementById('coachStatus');
+  const primary = document.getElementById('coachPrimary');
+  const secondary = document.getElementById('coachSecondary');
+  if (!status || !primary || !secondary) return;
+
+  const latestCost = result.budget?.events?.[result.budget.events.length - 1]?.actualCost;
+  const gained = result.disclosedFacts?.length || 0;
+  const hasCrossCheck = (result.crossRoleReferences || []).length > 0;
+  const hasBreadcrumb = (result.breadcrumbSignals || []).length > 0;
+
+  if (result.budget?.exhausted) {
+    status.textContent = '进入决策';
+    primary.textContent = '行动窗口已用尽。请把已有线索整理进工作台，优先补齐目标、边界、风险和证据引用。';
+    secondary.textContent = '提交前检查：方案是否能解释关键风险，证据链是否能支撑你的取舍。';
+    return;
+  }
+
+  if (result.isRepeat) {
+    status.textContent = '调整问法';
+    primary.textContent = '这次追问信息增量偏低。换一个角色，或把已掌握线索拿去做交叉验证。';
+    secondary.textContent = latestCost ? `本轮占用 ${latestCost} min。下一问建议聚焦一个具体指标或应急能力。` : '下一问建议聚焦一个具体指标或应急能力。';
+    return;
+  }
+
+  if (hasCrossCheck) {
+    status.textContent = '验证有效';
+    primary.textContent = '你完成了一次跨角色验证。把这条证据拖入工作台，作为方案取舍的支撑。';
+    secondary.textContent = gained ? `本轮新增 ${gained} 条线索。继续追问其影响范围、止血方式或业务代价。` : '继续追问其影响范围、止血方式或业务代价。';
+    return;
+  }
+
+  if (gained > 0) {
+    status.textContent = '线索入库';
+    primary.textContent = `本轮新增 ${gained} 条关键线索。优先判断它属于目标、边界、风险还是证据引用。`;
+    secondary.textContent = hasBreadcrumb
+      ? '角色给出了弱信号。下一步可以顺着这个方向追问更具体的条件。'
+      : '下一步建议换角色验证这条线索，避免只听单方叙述。';
+    return;
+  }
+
+  status.textContent = '继续侦查';
+  primary.textContent = '这次回答没有形成新线索。尝试问更具体的问题，例如触发条件、监控指标、修复进展或回滚能力。';
+  secondary.textContent = latestCost ? `本轮占用 ${latestCost} min。行动窗口有限，下一问要更窄。` : '行动窗口有限，下一问要更窄。';
+}
+
 // ============ Facts Panel ============
 async function refreshState() {
   stateData = await api(`/sessions/${sessionId}`);
   const facts = await api(`/sessions/${sessionId}/facts`);
   factsData = facts;
+  updateBudgetUI(stateData.budget);
   renderFacts();
+  updateWorkbenchStatus();
 
   // Enable D1/D2 buttons based on state
   if (stateData.d1Choice) {
@@ -1716,33 +3701,270 @@ async function refreshState() {
     document.getElementById('btnReport').disabled = false;
     updatePhase('report');
   }
+  saveProgress();
 }
 
 function renderFacts() {
   const list = document.getElementById('factList');
   const acquired = factsData.acquired || [];
   const count = acquired.length;
-  const total = factsData.totalCount || 17;
+  renderEvidenceNetwork(acquired);
+  const visibleFacts = getVisibleFacts(acquired);
+  const isFiltered = selectedEvidenceRole !== 'ALL';
 
-  document.getElementById('factCount').textContent = `${count} / ${total}`;
+  document.getElementById('factCount').textContent = count
+    ? (isFiltered ? `${visibleFacts.length}/${count}` : `${count} 条线索`)
+    : '持续更新';
 
   if (count === 0) {
-    list.innerHTML = `<div class="empty-state" style="padding: 20px; font-size: 12px;"><div class="empty-state-text">访谈干系人后，获取的事实将显示在这里</div></div>`;
+    list.innerHTML = `<div class="empty-state" style="padding: 20px; font-size: 12px;"><div class="empty-state-text">访谈后，关键线索会沉淀到这里。</div></div>`;
     return;
   }
 
-  list.innerHTML = acquired.map(f => `
-    <div class="fact-card ${f.isRedLine ? 'red-line' : 'normal'}">
+  if (visibleFacts.length === 0) {
+    list.innerHTML = `<div class="empty-state" style="padding: 20px; font-size: 12px;"><div class="empty-state-text">当前筛选下暂无线索。换一个角色或继续访谈。</div></div>`;
+    return;
+  }
+
+  list.innerHTML = visibleFacts.map(f => `
+    <div class="fact-card ${f.isRedLine ? 'red-line' : 'normal'} ${isFactInWorkbench(f.id) ? 'selected-for-workbench' : ''}"
+      draggable="true"
+      data-fact-id="${f.id}"
+      data-holder="${f.holder || ''}"
+      ondragstart="handleFactDrag(event)"
+      onclick="addFactToWorkbench('${f.id}', 'facts')">
       <div class="fact-card-header">
         <span class="fact-id">${f.id}</span>
-        <span class="fact-level ${f.accessLevel || 'L1'}">${f.accessLevel || 'L1'}</span>
-        ${f.isRedLine ? '<span style="color:var(--danger); font-size:10px; font-weight:600;">红线</span>' : ''}
+        <span class="fact-level ${f.accessLevel || 'L1'}">${getAccessLabel(f.accessLevel || 'L1')}</span>
+        ${f.isRedLine ? '<span style="color:var(--danger); font-size:10px; font-weight:600;">关键风险</span>' : ''}
       </div>
       <div class="fact-content">${escapeHtml(f.content)}</div>
-      <div class="fact-holder">来源: ${f.holder || '未知'}</div>
+      <div class="fact-holder">来源: ${getHolderLabel(f.holder)}</div>
       ${f.weakSignal ? `<div class="fact-weak-signal">弱信号: ${escapeHtml(f.weakSignal)}</div>` : ''}
     </div>
   `).join('');
+}
+
+function getVisibleFacts(acquired) {
+  const facts = Array.isArray(acquired) ? acquired : [];
+  if (selectedEvidenceRole === 'RISK') return facts.filter(f => f.isRedLine);
+  if (selectedEvidenceRole && selectedEvidenceRole !== 'ALL') return facts.filter(f => f.holder === selectedEvidenceRole);
+  return facts;
+}
+
+function selectEvidenceRole(roleId) {
+  selectedEvidenceRole = selectedEvidenceRole === roleId && roleId !== 'ALL' ? 'ALL' : roleId;
+  renderFacts();
+  saveProgress();
+}
+
+function addFilteredEvidenceToWorkbench() {
+  const acquired = factsData.acquired || [];
+  const visibleFacts = getVisibleFacts(acquired);
+  const candidates = visibleFacts.filter(f => f && f.id);
+  if (!candidates.length) {
+    showToast('当前筛选下还没有可加入的线索', 'error');
+    return;
+  }
+
+  let added = 0;
+  candidates.forEach(f => {
+    if (!workbench.facts.includes(f.id)) {
+      workbench.facts.push(f.id);
+      added += 1;
+    }
+    if (!workbench.evidence_refs.includes(f.id)) {
+      workbench.evidence_refs.push(f.id);
+      added += 1;
+    }
+  });
+
+  renderWorkbenchDrops();
+  renderFacts();
+  updateWorkbenchStatus();
+  saveProgress();
+  showToast(added ? `已加入 ${candidates.length} 条线索到工作台` : '这些线索已经在工作台中', 'success');
+}
+
+function recordEvidencePathEvents(result, toRoleId) {
+  const roleNames = { R1: '沈屹', R2: '闻笛', R3: '江照', R4: '许可' };
+  const nextEvents = [];
+
+  (result.crossRoleReferences || []).forEach(ref => {
+    nextEvents.push({
+      type: 'cross',
+      factId: ref.factId || '',
+      fromRole: ref.fromRole || '',
+      toRole: toRoleId,
+      text: `${roleNames[ref.fromRole] || ref.fromRole || '其他角色'} 的线索被用于追问 ${roleNames[toRoleId] || toRoleId}`,
+      at: new Date().toISOString(),
+    });
+  });
+
+  (result.stanceConflicts || []).forEach(conflict => {
+    nextEvents.push({
+      type: 'conflict',
+      factId: conflict.factId || '',
+      fromRole: conflict.factHolder || '',
+      toRole: toRoleId,
+      text: conflict.factContent || conflict.description || conflict.acknowledgment || '角色根据已有证据调整了立场',
+      at: new Date().toISOString(),
+    });
+  });
+
+  nextEvents.forEach(event => {
+    const key = `${event.type}:${event.factId}:${event.fromRole}:${event.toRole}:${event.text}`;
+    const exists = evidencePathEvents.some(item => `${item.type}:${item.factId}:${item.fromRole}:${item.toRole}:${item.text}` === key);
+    if (!exists) evidencePathEvents.push(event);
+  });
+  evidencePathEvents = evidencePathEvents.slice(-12);
+}
+
+function renderEvidenceNetwork(acquired) {
+  const grid = document.getElementById('evidenceNetworkGrid');
+  const summary = document.getElementById('evidenceNetworkSummary');
+  const status = document.getElementById('networkStatus');
+  const pathList = document.getElementById('evidencePathList');
+  const addBtn = document.getElementById('networkAddBtn');
+  if (!grid || !summary || !status || !pathList) return;
+
+  const facts = Array.isArray(acquired) ? acquired : [];
+  const visibleFacts = getVisibleFacts(facts);
+  const roles = [
+    { id: 'R1', name: '沈屹', focus: '技术边界' },
+    { id: 'R2', name: '闻笛', focus: '质量风险' },
+    { id: 'R3', name: '江照', focus: '业务目标' },
+    { id: 'R4', name: '许可', focus: '战略窗口' },
+  ];
+  const byRole = roles.map(role => {
+    const owned = facts.filter(f => f.holder === role.id);
+    const riskCount = owned.filter(f => f.isRedLine).length;
+    return { ...role, count: owned.length, riskCount };
+  });
+  const covered = byRole.filter(r => r.count > 0).length;
+  const critical = facts.filter(f => f.isRedLine).length;
+  const nextRole = byRole.find(r => r.count === 0) || byRole.slice().sort((a, b) => a.riskCount - b.riskCount || a.count - b.count)[0];
+
+  status.textContent = covered ? `${covered}/4 已点亮` : '待点亮';
+  document.getElementById('networkAllBtn')?.classList.toggle('active', selectedEvidenceRole === 'ALL');
+  document.getElementById('networkRiskBtn')?.classList.toggle('active', selectedEvidenceRole === 'RISK');
+  if (addBtn) {
+    addBtn.textContent = visibleFacts.length ? `加入当前筛选到引用 (${visibleFacts.length})` : '加入当前筛选到引用';
+    addBtn.disabled = visibleFacts.length === 0;
+  }
+  grid.innerHTML = buildEvidenceNetworkSVG(byRole, selectedEvidenceRole, facts.length);
+  renderEvidencePaths(facts);
+
+  if (!facts.length) {
+    summary.textContent = '访谈开始后，系统会按角色来源点亮证据覆盖，帮助你判断下一步该问谁。';
+    return;
+  }
+  if (covered >= 4 && critical >= 4) {
+    summary.textContent = '证据网络已经覆盖四类角色。现在可以把关键线索拖入工作台，形成可提交的决策结构。';
+    return;
+  }
+  summary.textContent = nextRole
+    ? `下一步建议：补问 ${nextRole.name} 的${nextRole.focus}，让证据链从单点判断变成跨角色验证。`
+    : '下一步建议：围绕已获得线索做交叉验证，确认事实、目标、边界和风险是否一致。';
+}
+
+function buildEvidenceNetworkSVG(byRole, selectedRole, totalCount) {
+  const pos = { R1: [70, 55], R2: [210, 55], R3: [70, 155], R4: [210, 155] };
+  const cx = 140, cy = 105;
+
+  let edges = '';
+  let nodes = '';
+  byRole.forEach(role => {
+    const [nx, ny] = pos[role.id];
+    const lit = role.count > 0;
+    const sel = selectedRole === role.id;
+    edges += `<line x1="${cx}" y1="${cy}" x2="${nx}" y2="${ny}" stroke="${lit ? 'rgba(246,160,77,0.55)' : 'rgba(255,255,255,0.10)'}" stroke-width="${lit ? 2 : 1.4}" stroke-dasharray="${lit ? 'none' : '4 4'}" />`;
+    const stroke = sel ? '#f6a04d' : (lit ? 'rgba(246,160,77,0.55)' : 'rgba(255,255,255,0.16)');
+    const nameFill = lit ? '#eef3f8' : '#66768d';
+    const countFill = lit ? '#f6a04d' : '#66768d';
+    const riskDot = role.riskCount > 0
+      ? `<circle cx="${nx + 15}" cy="${ny - 15}" r="4" fill="#ef5b68" stroke="#0f151d" stroke-width="1.5" />`
+      : '';
+    nodes += `
+      <g class="nn-node ${lit ? 'lit' : 'dim'} ${sel ? 'sel' : ''}" onclick="selectEvidenceRole('${role.id}')">
+        <title>${role.name} · ${role.focus} · 关键风险 ${role.riskCount}</title>
+        <circle cx="${nx}" cy="${ny}" r="23" fill="${lit ? '#161e2a' : '#121922'}" stroke="${stroke}" stroke-width="${sel ? 2 : 1.4}" />
+        <text x="${nx}" y="${ny - 3}" text-anchor="middle" fill="${nameFill}" font-size="11" font-weight="700">${role.name}</text>
+        <text x="${nx}" y="${ny + 12}" text-anchor="middle" fill="${countFill}" font-size="9" font-family="SFMono-Regular, Consolas, monospace">${role.count} 条</text>
+        ${riskDot}
+      </g>`;
+  });
+
+  const hub = `
+    <g>
+      <circle cx="${cx}" cy="${cy}" r="31" fill="rgba(246,160,77,0.10)" stroke="rgba(246,160,77,0.35)" stroke-width="1" />
+      <circle cx="${cx}" cy="${cy}" r="24" fill="#111820" stroke="rgba(246,160,77,0.5)" stroke-width="1.4" />
+      <text x="${cx}" y="${cy - 1}" text-anchor="middle" fill="#f6a04d" font-size="17" font-weight="800" font-family="SFMono-Regular, Consolas, monospace">${totalCount}</text>
+      <text x="${cx}" y="${cy + 13}" text-anchor="middle" fill="#9aa8ba" font-size="8.5">已获线索</text>
+    </g>`;
+
+  return `
+    <svg class="evidence-network-svg" viewBox="0 0 280 210" role="img" aria-label="干系人证据关系图">
+      ${edges}${hub}${nodes}
+    </svg>`;
+}
+
+function renderEvidencePaths(facts) {
+  const pathList = document.getElementById('evidencePathList');
+  if (!pathList) return;
+  const factById = new Map((facts || []).map(f => [f.id, f]));
+  const roleNames = { R1: '沈屹', R2: '闻笛', R3: '江照', R4: '许可' };
+  const filteredEvents = evidencePathEvents.filter(event => {
+    if (selectedEvidenceRole === 'ALL') return true;
+    if (selectedEvidenceRole === 'RISK') return factById.get(event.factId)?.isRedLine;
+    return event.fromRole === selectedEvidenceRole || event.toRole === selectedEvidenceRole;
+  }).slice(-3).reverse();
+
+  if (!filteredEvents.length) {
+    pathList.innerHTML = `<div class="evidence-path-item">尚未形成显式交叉路径。用已获得线索追问另一位角色，就会在这里沉淀验证轨迹。</div>`;
+    return;
+  }
+
+  pathList.innerHTML = filteredEvents.map(event => {
+    const fact = factById.get(event.factId);
+    const badge = event.type === 'conflict' ? '立场调整' : '交叉验证';
+    const factText = fact ? ` · ${fact.content}` : '';
+    const route = event.fromRole
+      ? `${roleNames[event.fromRole] || event.fromRole} → ${roleNames[event.toRole] || event.toRole}`
+      : roleNames[event.toRole] || event.toRole;
+    return `<div class="evidence-path-item"><strong>${badge}</strong> ${escapeHtml(route)} ${event.factId ? `[${escapeHtml(event.factId)}]` : ''}<br>${escapeHtml(event.text + factText)}</div>`;
+  }).join('');
+}
+
+function isFactInWorkbench(factId) {
+  return workbench.facts.includes(factId) || workbench.evidence_refs.includes(factId);
+}
+
+function updateBudgetUI(budget) {
+  if (!budget) return;
+  const total = budget.totalMinutes || 40;
+  const remaining = Math.max(0, budget.remainingMinutes ?? total);
+  const pct = total > 0 ? Math.max(0, Math.min(100, (remaining / total) * 100)) : 0;
+  document.getElementById('budgetRemaining').textContent = remaining;
+  document.getElementById('budgetPanelRemaining').textContent = remaining;
+  document.getElementById('budgetPanelTotal').textContent = total;
+  const ring = document.getElementById('budgetRingFg');
+  if (ring) {
+    const CIRC = 314.16;
+    ring.style.strokeDashoffset = (CIRC * (1 - pct / 100)).toFixed(2);
+    ring.style.stroke = pct <= 25 ? 'var(--danger)' : pct <= 55 ? 'var(--accent)' : 'var(--success)';
+    ring.style.filter = pct <= 25
+      ? 'drop-shadow(0 0 6px var(--danger-glow))'
+      : pct <= 55
+        ? 'drop-shadow(0 0 6px var(--accent-glow))'
+        : 'drop-shadow(0 0 6px rgba(57,210,143,0.4))';
+  }
+  const last = budget.events && budget.events[budget.events.length - 1];
+  document.getElementById('budgetHint').textContent = budget.exhausted
+    ? '行动窗口已用尽。现在必须基于已有证据做结构化决策。'
+    : last
+      ? `上次访谈消耗 ${last.actualCost} min，剩余 ${remaining} min。`
+      : '每次访谈都会占用窗口时间。优先级越清晰，证据链越完整。';
 }
 
 // ============ Roles Refresh ============
@@ -1755,6 +3977,135 @@ async function refreshRoles() {
       document.querySelector(`.role-card[data-role="${selectedRoleId}"]`)?.classList.add('active');
     }
   } catch (err) { /* silent */ }
+}
+
+// ============ Decision Workbench ============
+function handleFactDrag(event) {
+  event.dataTransfer.setData('text/plain', event.currentTarget.dataset.factId);
+}
+
+function addFactToWorkbench(factId, field = 'facts') {
+  if (!factId || !workbench[field]) return;
+  if (!workbench[field].includes(factId)) {
+    workbench[field].push(factId);
+  }
+  if (field === 'facts' && !workbench.evidence_refs.includes(factId)) {
+    workbench.evidence_refs.push(factId);
+  }
+  renderWorkbenchDrops();
+  renderFacts();
+  updateWorkbenchStatus();
+  saveProgress();
+}
+
+function removeFactFromWorkbench(factId, field) {
+  workbench[field] = workbench[field].filter(id => id !== factId);
+  renderWorkbenchDrops();
+  renderFacts();
+  updateWorkbenchStatus();
+  saveProgress();
+}
+
+function renderWorkbenchDrops() {
+  renderDropZone('wbFacts', 'facts', '把线索拖到这里，或点击右侧证据卡加入');
+  renderDropZone('wbEvidence', 'evidence_refs', '引用已掌握的关键线索');
+}
+
+function renderDropZone(elementId, field, emptyText) {
+  const el = document.getElementById(elementId);
+  if (!el) return;
+  const facts = workbench[field] || [];
+  if (facts.length === 0) {
+    el.textContent = emptyText;
+    return;
+  }
+  el.innerHTML = facts.map(fid => `
+    <span class="evidence-token">
+      ${fid}
+      <button type="button" onclick="event.stopPropagation(); removeFactFromWorkbench('${fid}', '${field}')">×</button>
+    </span>
+  `).join('');
+}
+
+function setupWorkbenchDropZones() {
+  document.querySelectorAll('[data-workbench-field]').forEach(zone => {
+    zone.addEventListener('dragover', event => {
+      event.preventDefault();
+      zone.classList.add('drag-over');
+    });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', event => {
+      event.preventDefault();
+      zone.classList.remove('drag-over');
+      const factId = event.dataTransfer.getData('text/plain');
+      addFactToWorkbench(factId, zone.dataset.workbenchField);
+    });
+  });
+}
+
+function parseWorkbenchList(value) {
+  return value.split(/[\n,，;；]+/).map(v => v.trim()).filter(Boolean);
+}
+
+function collectWorkbench() {
+  return {
+    facts: workbench.facts.slice(),
+    goals: parseWorkbenchList(document.getElementById('wbGoals')?.value || ''),
+    constraints: parseWorkbenchList(document.getElementById('wbConstraints')?.value || ''),
+    option: selectedD2,
+    risks: parseWorkbenchList(document.getElementById('wbRisks')?.value || ''),
+    evidence_refs: workbench.evidence_refs.slice(),
+  };
+}
+
+function getWorkbenchMissing() {
+  const data = collectWorkbench();
+  const missing = [];
+  if (data.facts.length === 0) missing.push('关键线索');
+  if (data.goals.length === 0) missing.push('目标');
+  if (data.constraints.length === 0) missing.push('决策边界');
+  if (!data.option) missing.push('方案');
+  if (data.risks.length === 0) missing.push('风险');
+  if (data.evidence_refs.length < 3) missing.push('证据引用');
+  return missing;
+}
+
+function updateWorkbenchStatus() {
+  const data = collectWorkbench();
+  const completed = [
+    data.facts.length > 0,
+    data.goals.length > 0,
+    data.constraints.length > 0,
+    !!data.option,
+    data.risks.length > 0,
+    data.evidence_refs.length >= 3,
+  ].filter(Boolean).length;
+
+  const statusText = completed === 6 ? '已就绪' : completed > 0 ? '进行中' : '待完善';
+  document.getElementById('workbenchCount').textContent = statusText;
+  const spineWorkbench = document.getElementById('spineWorkbench');
+  if (spineWorkbench) spineWorkbench.textContent = statusText;
+  document.querySelectorAll('.workspace-mini').forEach(el => {
+    const field = el.dataset.field;
+    const done = field === 'option'
+      ? !!data.option
+      : field === 'evidence_refs'
+        ? data.evidence_refs.length >= 3
+        : Array.isArray(data[field]) && data[field].length > 0;
+    el.classList.toggle('done', done);
+    el.classList.toggle('missing', !done);
+  });
+
+  const validation = document.getElementById('workbenchValidation');
+  const confirm = document.getElementById('d2Confirm');
+  if (validation && confirm) {
+    const missing = getWorkbenchMissing();
+    validation.classList.toggle('ready', missing.length === 0);
+    validation.textContent = missing.length === 0
+      ? '决策结构已就绪，可以提交 D2。'
+      : `仍缺：${missing.join('、')}`;
+    confirm.disabled = missing.length > 0;
+  }
 }
 
 // ============ D1 Decision ============
@@ -1770,12 +4121,18 @@ function showD1Modal() {
         <span class="decision-option-tag">${val.time_cost}</span>
       </div>
       <div class="decision-option-desc">${val.teaching_intent}</div>
-      ${val.auto_disclose?.length ? `<div class="decision-option-impact">自动揭示: ${val.auto_disclose.join(', ')}</div>` : ''}
-      ${val.d2_options?.length ? `<div class="decision-option-impact">D2 可选: ${val.d2_options.join(', ')}</div>` : ''}
+      ${val.auto_disclose?.length ? '<div class="decision-option-impact">将补充关键线索</div>' : ''}
+      ${val.d2_options?.length ? `<div class="decision-option-impact">后续方案: ${val.d2_options.join(', ')}</div>` : ''}
     </div>
   `).join('');
 
   document.getElementById('d1Options').innerHTML = optionsHtml;
+  if (selectedD1) {
+    document.querySelectorAll('#d1Options .decision-option').forEach(o => {
+      o.classList.toggle('selected', o.dataset.choice === selectedD1);
+    });
+    document.getElementById('d1Confirm').disabled = false;
+  }
   document.getElementById('d1Modal').classList.add('active');
 }
 
@@ -1785,6 +4142,7 @@ function selectD1(choice) {
     o.classList.toggle('selected', o.dataset.choice === choice);
   });
   document.getElementById('d1Confirm').disabled = false;
+  saveProgress();
 }
 
 async function confirmD1() {
@@ -1798,13 +4156,15 @@ async function confirmD1() {
 
     addSystemMessage(`D1 决策已提交: ${selectedD1.replace(/_/g, ' ')}`);
     if (result.autoDisclosedFacts?.length) {
-      addSystemMessage(`自动揭示事实: ${result.autoDisclosedFacts.join(', ')}`);
+      addSystemMessage(`系统补充线索: ${result.autoDisclosedFacts.join(', ')}`);
     }
     if (result.teachingIntent) {
-      addSystemMessage(`教学意图: ${result.teachingIntent}`);
+      addSystemMessage(`训练提示: ${result.teachingIntent}`);
     }
 
     await refreshState();
+    if (getCurrentDemoStep()?.type === 'd1') advanceDemoStep();
+    saveProgress();
     showToast('D1 决策已提交', 'success');
   } catch (err) {
     showToast(err.message, 'error');
@@ -1821,11 +4181,11 @@ function showD2Modal() {
   const options = d2.options || ['Go全量', 'Delay_24h', 'Limited_5%', 'Limited_20%', 'Limited_50%'];
 
   const optionDescs = {
-    'Go全量': '全量上线新引擎，承担 QPS>2500 触发缺陷的风险',
+    'Go全量': '全量上线新引擎，承担高峰稳定性风险',
     'Delay_24h': '延期 24 小时上线，等待修复完成',
-    'Limited_5%': '灰度 5% 流量到新引擎，远低于触发阈值',
-    'Limited_20%': '灰度 20% 流量，接近但低于触发阈值',
-    'Limited_50%': '灰度 50% 流量，超过触发阈值，风险较高',
+    'Limited_5%': '小比例灰度到新引擎，优先验证链路稳定性',
+    'Limited_20%': '中低比例灰度，兼顾业务收益与风险观察',
+    'Limited_50%': '较高比例灰度，收益更明显但风险暴露更强',
   };
 
   const optionsHtml = options.map(opt => `
@@ -1838,6 +4198,13 @@ function showD2Modal() {
   `).join('');
 
   document.getElementById('d2Options').innerHTML = optionsHtml;
+  if (selectedD2) {
+    document.querySelectorAll('#d2Options .decision-option').forEach(o => {
+      o.classList.toggle('selected', o.dataset.choice === selectedD2);
+    });
+  }
+  renderWorkbenchDrops();
+  updateWorkbenchStatus();
   document.getElementById('d2Modal').classList.add('active');
 }
 
@@ -1846,32 +4213,47 @@ function selectD2(choice) {
   document.querySelectorAll('#d2Options .decision-option').forEach(o => {
     o.classList.toggle('selected', o.dataset.choice === choice);
   });
-  document.getElementById('d2Confirm').disabled = false;
+  updateWorkbenchStatus();
+  saveProgress();
 }
 
 async function confirmD2() {
-  if (!selectedD2) return;
+  const missing = getWorkbenchMissing();
+  if (missing.length > 0) {
+    showToast(`D2 工作台未填齐：${missing.join('、')}`, 'error');
+    updateWorkbenchStatus();
+    return;
+  }
   document.getElementById('d2Confirm').disabled = true;
   document.getElementById('d2Confirm').textContent = '提交中...';
 
   const rationale = document.getElementById('d2Rationale').value.trim();
+  const wb = collectWorkbench();
 
   try {
     const result = await api(`/sessions/${sessionId}/decisions/d2`, 'POST', {
       decision: {
         option: selectedD2,
+        facts: wb.facts,
+        goals: wb.goals,
+        constraints: wb.constraints,
+        risks: wb.risks,
+        evidence_refs: wb.evidence_refs,
         rationale,
+        contingency_plan: wb.risks.join('；'),
       },
     });
 
     closeModal('d2Modal');
     addSystemMessage(`D2 决策已提交: ${selectedD2.replace(/_/g, ' ')}`);
 
-    if (result.constraintResults?.violated?.length > 0) {
-      addSystemMessage(`约束违反: ${result.constraintResults.violated.map(c => c.constraint).join(', ')}`);
+  if (result.constraintResults?.violated?.length > 0) {
+      addSystemMessage(`边界风险: ${result.constraintResults.violated.map(c => c.constraint).join(', ')}`);
     }
 
     await refreshState();
+    if (getCurrentDemoStep()?.type === 'd2') advanceDemoStep();
+    saveProgress();
     showToast('D2 决策已提交', 'success');
   } catch (err) {
     showToast(err.message, 'error');
@@ -1885,6 +4267,7 @@ async function confirmD2() {
 async function showReport() {
   document.getElementById('reportPage').classList.add('active');
   document.getElementById('reportContent').innerHTML = '<div style="text-align:center; padding:60px; color: var(--text-muted);"><div class="loading-dots"><span></span><span></span><span></span></div><div style="margin-top:12px">正在生成复盘报告...</div></div>';
+  if (getCurrentDemoStep()?.type === 'report') advanceDemoStep();
 
   try {
     const report = await api(`/sessions/${sessionId}/report`);
@@ -1941,7 +4324,7 @@ function exportReportPDF() {
       <span>导出时间：${dateStr}</span>
       <span>D1 决策：${d1Text}</span>
       <span>D2 决策：${d2Text}</span>
-      <span>已获取事实：${(stateData?.acquiredFacts || []).length} 条</span>
+      <span>证据沉淀：${(stateData?.acquiredFacts || []).length} 条</span>
     </div>
   `;
 
@@ -1954,6 +4337,436 @@ function exportReportPDF() {
   }, 1000);
 }
 
+function getDimensionLabels() {
+  return {
+    user_insight: '用户洞察',
+    decision_quality: '决策质量',
+    communication: '沟通能力',
+    business_balance: '商业平衡',
+    growth_reflection: '成长反思',
+  };
+}
+
+function cleanReportText(text) {
+  const internalModeTerm = ['规', '则', '引', '擎'].join('');
+  const internalFallbackTerm = ['规', '则', '兜', '底'].join('');
+  return String(text || '')
+    .replace(/待\s*LLM\s*替换/g, '待反思评分')
+    .replace(/待LLM/g, '待反思')
+    .replace(/LLM/g, '智能评估')
+    .replace(new RegExp(internalModeTerm, 'g'), '智能评估')
+    .replace(new RegExp(internalFallbackTerm, 'g'), '智能评估')
+    .replace(/D1 自动披露/g, '中间决策补充线索')
+    .replace(/初始可见/g, '公开背景')
+    .replace(/访谈 R1/g, '访谈沈屹')
+    .replace(/访谈 R2/g, '访谈闻笛')
+    .replace(/访谈 R3/g, '访谈江照')
+    .replace(/访谈 R4/g, '访谈许可');
+}
+
+function radarPoint(index, total, radius, valuePct) {
+  const angle = (-90 + (360 / total) * index) * Math.PI / 180;
+  const r = radius * Math.max(0, Math.min(100, valuePct)) / 100;
+  return {
+    x: 115 + Math.cos(angle) * r,
+    y: 115 + Math.sin(angle) * r,
+  };
+}
+
+function buildRadarChart(dims, dimLabels) {
+  const entries = Object.entries(dimLabels).map(([key, label]) => ({
+    key,
+    label,
+    pct: dims[key]?.percentage || 0,
+  }));
+  const total = entries.length;
+  const rings = [25, 50, 75, 100].map(level => {
+    const pts = entries.map((_, i) => radarPoint(i, total, 88, level)).map(p => `${p.x},${p.y}`).join(' ');
+    return `<polygon points="${pts}" fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="1" />`;
+  }).join('');
+  const axes = entries.map((entry, i) => {
+    const end = radarPoint(i, total, 88, 100);
+    const label = radarPoint(i, total, 106, 100);
+    return `
+      <line x1="115" y1="115" x2="${end.x}" y2="${end.y}" stroke="rgba(255,255,255,0.08)" />
+      <text class="radar-axis-label" x="${label.x}" y="${label.y}" text-anchor="middle" dominant-baseline="middle">${entry.label}</text>
+    `;
+  }).join('');
+  const scorePts = entries.map((entry, i) => radarPoint(i, total, 88, entry.pct)).map(p => `${p.x},${p.y}`).join(' ');
+  return `
+    <svg class="radar-svg" viewBox="0 0 230 230" role="img" aria-label="五维能力雷达图">
+      <defs>
+        <linearGradient id="radarFill" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f6a04d" stop-opacity="0.42" />
+          <stop offset="100%" stop-color="#58b7d7" stop-opacity="0.08" />
+        </linearGradient>
+        <linearGradient id="radarStroke" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#f6a04d" />
+          <stop offset="100%" stop-color="#c77b35" />
+        </linearGradient>
+        <filter id="radarGlow" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="3.5" result="blur" />
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+      ${rings}
+      ${axes}
+      <polygon points="${scorePts}" fill="url(#radarFill)" stroke="url(#radarStroke)" stroke-width="2.2" stroke-linejoin="round" filter="url(#radarGlow)" />
+      ${entries.map((entry, i) => {
+        const p = radarPoint(i, total, 88, entry.pct);
+        return `<circle cx="${p.x}" cy="${p.y}" r="4" fill="#f6a04d" stroke="#0f151d" stroke-width="1.5" />`;
+      }).join('')}
+    </svg>
+  `;
+}
+
+function buildDimensionRows(dims, dimLabels) {
+  return Object.entries(dimLabels).map(([key, label]) => {
+    const d = dims[key] || {};
+    const pct = d.percentage || 0;
+    const detail = d.details && d.details[0]
+      ? (d.details[0].item || d.details[0].desc || d.details[0].fact || d.details[0].reason || '')
+      : (d.pendingLLM ? '成长反思未提交，等待智能评估。' : '暂无详细归因。');
+    return `
+      <div class="dimension-row">
+        <span>${label}</span>
+        <div class="dimension-track"><div class="dimension-fill" style="width:${pct}%"></div></div>
+        <span class="score-detail">${pct}%</span>
+        <div class="dimension-detail">${escapeHtml(cleanReportText(detail))}</div>
+      </div>
+    `;
+  }).join('');
+}
+
+function buildBudgetReport(budget, interviewLog) {
+  const total = budget?.totalMinutes || 40;
+  const spent = budget?.spentMinutes || 0;
+  const remaining = budget?.remainingMinutes ?? total;
+  const events = budget?.events || [];
+  const roleNames = { R1: '沈屹', R2: '闻笛', R3: '江照', R4: '许可' };
+  const rows = events.length ? events.map(e => `
+    <div class="budget-event-row">
+      <span>${roleNames[e.roleId] || e.roleId}</span>
+      <span>${intentLabels[e.actionType] || e.actionType}</span>
+      <strong>${e.actualCost} min</strong>
+    </div>
+  `).join('') : '<div class="score-detail">暂无行动记录。</div>';
+
+  return `
+    <div class="report-section">
+      <div class="report-section-title">行动窗口</div>
+      <div class="report-kpi-row" style="margin-bottom:10px;">
+        <div class="report-kpi"><b>${spent}</b><span>已使用 min</span></div>
+        <div class="report-kpi"><b>${remaining}</b><span>可用窗口 min</span></div>
+        <div class="report-kpi"><b>${interviewLog.length}</b><span>访谈轮次</span></div>
+      </div>
+      ${rows}
+    </div>
+  `;
+}
+
+function buildWorkbenchReport(decision) {
+  const d = decision && typeof decision === 'object' ? decision : {};
+  const option = d.option || d.d2_option || '未提交';
+  const list = value => Array.isArray(value) ? value : (value ? [value] : []);
+  const renderList = items => items.length
+    ? `<div class="fact-chip-list">${items.map(item => `<span class="fact-chip">${escapeHtml(item)}</span>`).join('')}</div>`
+    : '<div class="score-detail">未填写</div>';
+
+  return `
+    <div class="report-section">
+      <div class="report-section-title">六要素决策结构</div>
+      <div class="workbench-report-grid">
+        <div class="workbench-report-cell"><div class="score-label">方案</div><div style="font-weight:700;">${escapeHtml(getOptionLabel(option))}</div></div>
+        <div class="workbench-report-cell"><div class="score-label">关键线索</div>${renderList(list(d.facts))}</div>
+        <div class="workbench-report-cell"><div class="score-label">目标</div>${renderList(list(d.goals))}</div>
+        <div class="workbench-report-cell"><div class="score-label">决策边界</div>${renderList(list(d.constraints))}</div>
+        <div class="workbench-report-cell"><div class="score-label">风险</div>${renderList(list(d.risks))}</div>
+        <div class="workbench-report-cell"><div class="score-label">证据引用</div>${renderList(list(d.evidence_refs || d.cited_facts))}</div>
+      </div>
+    </div>
+  `;
+}
+
+function buildEvidenceSnapshot(allFacts, scenarioFacts) {
+  const redLineIds = ['F-04', 'F-06', 'F-08', 'F-11', 'F-12', 'F-14', 'F-15', 'F-17'];
+  const acquiredRedLines = redLineIds.filter(id => allFacts.includes(id));
+  const missedRedLines = redLineIds.filter(id => !allFacts.includes(id));
+  const l3Acquired = scenarioFacts.filter(f => f.access_level === 'L3' && allFacts.includes(f.id)).length;
+  const l3Total = scenarioFacts.filter(f => f.access_level === 'L3').length;
+  return `
+    <div class="report-section">
+      <div class="report-section-title">证据图谱快照</div>
+      <div class="report-kpi-row" style="margin-bottom:10px;">
+        <div class="report-kpi"><b>${allFacts.length}</b><span>证据沉淀</span></div>
+        <div class="report-kpi"><b>${acquiredRedLines.length}</b><span>关键风险已识别</span></div>
+        <div class="report-kpi"><b>${l3Acquired}</b><span>深层线索</span></div>
+      </div>
+      <div class="score-label" style="margin-bottom:6px;">已掌握关键风险</div>
+      <div class="fact-chip-list" style="margin-bottom:10px;">${acquiredRedLines.map(id => `<span class="fact-chip">${id}</span>`).join('') || '<span class="score-detail">暂无</span>'}</div>
+      <div class="score-label" style="margin-bottom:6px;">待补充关键风险</div>
+      <div class="fact-chip-list">${missedRedLines.map(id => `<span class="fact-chip missed">${id}</span>`).join('') || '<span class="score-detail">无</span>'}</div>
+    </div>
+  `;
+}
+
+function buildReportEvidencePath(decision, allFacts, scenarioFacts) {
+  const d = decision && typeof decision === 'object' ? decision : {};
+  const cited = new Set([...(d.evidence_refs || []), ...(d.cited_facts || []), ...(d.facts || [])]);
+  const acquired = new Set(allFacts || []);
+  const roles = [
+    { id: 'R1', name: '沈屹', focus: '技术边界' },
+    { id: 'R2', name: '闻笛', focus: '质量风险' },
+    { id: 'R3', name: '江照', focus: '业务目标' },
+    { id: 'R4', name: '许可', focus: '战略窗口' },
+  ];
+  const cards = roles.map(role => {
+    const owned = scenarioFacts.filter(f => f.holder === role.id && acquired.has(f.id));
+    const citedOwned = owned.filter(f => cited.has(f.id));
+    const tags = owned.length
+      ? owned.map(f => `<span class="report-path-tag ${cited.has(f.id) ? 'cited' : ''}">${f.id}</span>`).join('')
+      : '<span class="score-detail">未获得</span>';
+    return `
+      <div class="report-path-card ${owned.length ? 'active' : ''}">
+        <div class="report-path-head">
+          <span>${role.name}</span>
+          <span class="report-path-count">${citedOwned.length}/${owned.length}</span>
+        </div>
+        <div class="report-path-focus">${role.focus} · 已引用/已获得</div>
+        <div class="report-path-tags">${tags}</div>
+      </div>
+    `;
+  }).join('');
+
+  const acquiredCount = acquired.size;
+  const citedCount = [...cited].filter(id => acquired.has(id)).length;
+  const keyCited = scenarioFacts.filter(f => f.red_line && cited.has(f.id)).length;
+  const bridgeText = acquiredCount
+    ? `你共沉淀 ${acquiredCount} 条线索，其中 ${citedCount} 条进入工作台引用，${keyCited} 条属于关键风险。理想路径是先覆盖不可替代角色，再把会改变方案的证据放入六要素结构。`
+    : '还没有形成证据路径。先通过访谈获得线索，再把关键证据加入工作台。';
+
+  return `
+    <div class="report-section">
+      <div class="report-section-title">证据路径图</div>
+      <div class="report-evidence-path">${cards}</div>
+      <div class="report-path-bridge">${escapeHtml(bridgeText)}</div>
+    </div>
+  `;
+}
+
+function getOptionLabel(option) {
+  const labels = {
+    'Go全量': '全量上线',
+    Go: '全量上线',
+    Delay_24h: '延期 24 小时',
+    'Limited_5%': '5% 小流量灰度',
+    'Limited_20%': '20% 稳健灰度',
+    'Limited_50%': '50% 扩量灰度',
+    'A_连夜修复': 'A 连夜修复',
+    'B_灰度准备': 'B 灰度准备',
+    'C_继续回归': 'C 继续回归',
+  };
+  return labels[option] || String(option || '未提交').replace(/_/g, ' ');
+}
+
+function humanizeReportText(text) {
+  return cleanReportText(text || '')
+    .replace(/S2=/g, '风险=')
+    .replace(/S3=/g, '支持度=')
+    .replace(/C-\d+/g, '边界风险')
+    .replace(/load=/g, '承载估算=')
+    .replace(/LLM/g, '智能评估')
+    .replace(/规则引擎/g, '智能评估')
+    .replace(/Mock/g, '演示')
+    .replace(/→/g, '，结果：');
+}
+
+function getLowestDimensions(dims, dimLabels) {
+  return Object.entries(dims)
+    .map(([key, d]) => ({
+      key,
+      label: dimLabels[key] || key,
+      pct: d.percentage || 0,
+      score: d.score || 0,
+      maxScore: d.maxScore || 0,
+      detail: d.details && d.details[0]
+        ? (d.details[0].item || d.details[0].desc || d.details[0].fact || d.details[0].reason || '')
+        : '',
+    }))
+    .sort((a, b) => a.pct - b.pct);
+}
+
+function buildDiagnosisPanel(report, allFacts, scenarioFacts, dims, dimLabels) {
+  const summary = report.resultResults?.summary?.summary || {};
+  const violated = report.constraintResults?.violated || [];
+  const riskLevel = summary.riskLevel || (violated.length ? '中' : '低');
+  const resultCls = riskLevel === '低' ? 'good' : (riskLevel === '中' ? 'warn' : 'risk');
+  const resultTitle = riskLevel === '低' ? '方案具备可控性' : (riskLevel === '中' ? '方案仍有权衡压力' : '方案存在高风险缺口');
+  const resultCopy = summary.risks && summary.risks.length
+    ? `主要风险集中在：${summary.risks.map(humanizeReportText).join('、')}。`
+    : '当前选择在上线风险、应急准备与业务窗口之间形成了相对稳定的平衡。';
+
+  const keyFacts = scenarioFacts.filter(f => f.red_line);
+  const missedKeyFacts = keyFacts.filter(f => !allFacts.includes(f.id));
+  const evidenceCls = missedKeyFacts.length === 0 ? 'good' : (missedKeyFacts.length <= 2 ? 'warn' : 'risk');
+  const evidenceTitle = missedKeyFacts.length === 0 ? '关键证据覆盖充分' : `仍有 ${missedKeyFacts.length} 个关键盲区`;
+  const evidenceCopy = missedKeyFacts.length === 0
+    ? '关键风险已被纳入决策结构，证据链可以支撑最终方案。'
+    : `缺口集中在 ${missedKeyFacts.slice(0, 3).map(f => getHolderLabel(f.holder)).join('、')}，需要用追问或交叉验证补齐。`;
+
+  const weakest = getLowestDimensions(dims, dimLabels)[0] || { label: '结构化复盘', pct: 0, detail: '' };
+  const abilityCls = weakest.pct >= 70 ? 'good' : (weakest.pct >= 50 ? 'warn' : 'risk');
+  const abilityCopy = weakest.detail
+    ? humanizeReportText(weakest.detail)
+    : '建议把事实、目标、边界、风险和证据引用拆开记录，减少只凭直觉做选择。';
+
+  return `
+    <div class="report-diagnostic-grid">
+      <div class="diagnostic-card ${resultCls}">
+        <div class="diagnostic-eyebrow"><span>决策结果诊断</span><span class="diagnostic-pill">风险 ${riskLevel}</span></div>
+        <div class="diagnostic-title">${escapeHtml(resultTitle)}</div>
+        <div class="diagnostic-copy">${escapeHtml(resultCopy)}</div>
+        <div class="diagnostic-meta">边界校验：${violated.length ? `${violated.length} 项待修` : '全部通过'}</div>
+      </div>
+      <div class="diagnostic-card ${evidenceCls}">
+        <div class="diagnostic-eyebrow"><span>证据盲区定位</span><span class="diagnostic-pill">${allFacts.length} 条沉淀</span></div>
+        <div class="diagnostic-title">${escapeHtml(evidenceTitle)}</div>
+        <div class="diagnostic-copy">${escapeHtml(evidenceCopy)}</div>
+        <div class="diagnostic-meta">关键风险覆盖：${keyFacts.length - missedKeyFacts.length}/${keyFacts.length}</div>
+      </div>
+      <div class="diagnostic-card ${abilityCls}">
+        <div class="diagnostic-eyebrow"><span>能力短板定位</span><span class="diagnostic-pill">${weakest.pct}%</span></div>
+        <div class="diagnostic-title">${escapeHtml(weakest.label)}</div>
+        <div class="diagnostic-copy">${escapeHtml(abilityCopy)}</div>
+        <div class="diagnostic-meta">下一轮优先提升这一维度，效果最明显。</div>
+      </div>
+    </div>
+  `;
+}
+
+function shortFactLabel(content) {
+  const t = String(content || '')
+    .replace(/（[^）]*）/g, '')
+    .split(/[，,。]/)[0].trim();
+  return t.length > 12 ? t.slice(0, 12) + '…' : t;
+}
+
+function humanizeCounterfactualCondition(condition, factLabelMap) {
+  const raw = String(condition || '').trim();
+  if (!raw) return '前提：根据已获取信息判断';
+  const isNot = raw.indexOf('not acquired') >= 0;
+  const factsPart = raw.replace(/acquired/g, '').replace(/not/g, '').trim();
+  const labels = factsPart.split(/\+/).map(s => s.trim()).filter(Boolean)
+    .map(id => factLabelMap[id] || id).join('、');
+  return `${isNot ? '未掌握' : '已掌握'}：${labels}`;
+}
+
+function parseCounterfactualOutcome(result) {
+  const raw = String(result || '');
+  let risk = (raw.match(/S2=(高|中|低)/) || [])[1] || '';
+  if (!risk) {
+    if (/事故触发|违反|流失|无预案/.test(raw)) risk = '高';
+    else if (/盲区|未知|扣分|无QA|无背书/.test(raw)) risk = '中';
+    else if (/安全|无事故|就绪/.test(raw)) risk = '低';
+    else risk = '中';
+  }
+  const support = (raw.match(/S3=(\d+)/) || [])[1] || '';
+  return { risk, support };
+}
+
+function humanizeCounterfactualResult(raw) {
+  let out = String(raw || '')
+    .replace(/load=(\d+)(<|>)(=?)(\d+)/g, (m, a, op, eq, b) => `压测峰值 ${a} QPS ${op === '>' ? '超过' : '低于'}阈值 ${b}`)
+    .replace(/load=(\d+)/g, '压测峰值 $1 QPS');
+  out = humanizeReportText(out)
+    .replace(/边界风险\/边界风险/g, '边界校验')
+    .replace(/边界风险\/边界/g, '边界校验')
+    .replace(/风险=[高中低]/g, '')
+    .replace(/支持度=\d+/g, '')
+    .replace(/[，,]{2,}/g, '，')
+    .replace(/^[，,]\s*/, '')
+    .replace(/[，,]\s*$/g, '')
+    .replace(/[，,]\s*([（(])/g, '$1')
+    .trim();
+  return out;
+}
+
+function buildCounterfactualCards(counterfactualList, scenarioFacts) {
+  const items = (counterfactualList || []).slice();
+  if (!items.length) return '';
+
+  const factLabelMap = {};
+  (scenarioFacts || []).forEach(f => { factLabelMap[f.id] = shortFactLabel(f.content); });
+
+  items.sort((a, b) => (b.isStudentChoice ? 1 : 0) - (a.isStudentChoice ? 1 : 0));
+
+  return `
+    <div class="counterfactual-grid">
+      ${items.map(cf => {
+        const outcome = parseCounterfactualOutcome(cf.result);
+        const riskCls = { 高: 'high', 中: 'mid', 低: 'low' }[outcome.risk] || 'na';
+        const resultText = humanizeCounterfactualResult(cf.result);
+        return `
+        <div class="counterfactual-item ${cf.isStudentChoice ? 'student' : ''}">
+          <div class="cf-head">
+            <span class="counterfactual-label">${escapeHtml(getOptionLabel(cf.option))}</span>
+            ${cf.isStudentChoice ? '<span class="counterfactual-badge">你的选择</span>' : '<span class="cf-tag">备选路径</span>'}
+          </div>
+          <div class="cf-meta">
+            <span class="cf-chip risk-${riskCls}">风险 ${escapeHtml(outcome.risk)}</span>
+            ${outcome.support ? `<span class="cf-chip support">方案支持度 ${escapeHtml(outcome.support)}</span>` : ''}
+          </div>
+          <div class="counterfactual-condition">${escapeHtml(humanizeCounterfactualCondition(cf.condition, factLabelMap))}</div>
+          <div class="counterfactual-result">${escapeHtml(resultText)}</div>
+        </div>
+      `;
+      }).join('')}
+    </div>
+  `;
+}
+
+function buildActionPlan(dims, dimLabels, suggestionsRaw, allFacts, scenarioFacts) {
+  const weakest = getLowestDimensions(dims, dimLabels)[0] || { label: '结构化复盘', pct: 0 };
+  const keyFacts = scenarioFacts.filter(f => f.red_line);
+  const missedKeyFacts = keyFacts.filter(f => !allFacts.includes(f.id));
+  const firstSuggestion = (suggestionsRaw || []).map(s => typeof s === 'string' ? s : (s.text || '')).filter(Boolean)[0];
+  const suggestionText = firstSuggestion
+    ? humanizeReportText(firstSuggestion).replace(/红线/g, '关键风险').replace(/约束/g, '边界')
+    : '下一轮先写下三条必须验证的问题，再进入访谈，避免被单一角色的立场带偏。';
+
+  const plans = [
+    {
+      title: `优先补强：${weakest.label}`,
+      copy: `当前最低维度为 ${weakest.pct}%。下一轮先把这一项作为访谈目标，而不是等报告后再补。`,
+    },
+    {
+      title: missedKeyFacts.length ? '把盲区变成追问清单' : '保持交叉验证习惯',
+      copy: missedKeyFacts.length
+        ? `围绕 ${missedKeyFacts.slice(0, 3).map(f => getHolderLabel(f.holder)).join('、')} 补充证据，先问事实再问立场。`
+        : '关键风险已经覆盖，下一步训练是在更少行动窗口内完成同样质量的判断。',
+    },
+    {
+      title: '迁移到下个场景',
+      copy: suggestionText,
+    },
+  ];
+
+  return `
+    <div class="report-section">
+      <div class="report-section-title">下一轮训练计划</div>
+      <div class="action-plan-grid">
+        ${plans.map((plan, index) => `
+          <div class="action-plan-item">
+            <div class="action-plan-step">STEP ${index + 1}</div>
+            <div class="action-plan-title">${escapeHtml(plan.title)}</div>
+            <div class="action-plan-copy">${escapeHtml(plan.copy)}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+}
+
 function renderReport(report) {
   const scoring = report.scoring || {};
   const totalScore = scoring.totalScore || 0;
@@ -1961,32 +4774,29 @@ function renderReport(report) {
 
   // Dimensions is an OBJECT keyed by dimension name, not an array
   const dims = scoring.dimensions || {};
-  const dimLabels = {
-    user_insight: '用户洞察',
-    decision_quality: '决策质量',
-    communication: '沟通能力',
-    business_balance: '商业平衡',
-    growth_reflection: '成长反思',
-  };
+  const dimLabels = getDimensionLabels();
+  const decision = (report.studentDecisions && report.studentDecisions.d2Decision) || {};
+  const budget = (report.studentDecisions && report.studentDecisions.budget) || {};
 
   const scoreGrid = Object.entries(dims).map(([key, d]) => {
     const pct = d.percentage || 0;
     const cls = pct >= 70 ? 'high' : pct >= 50 ? 'mid' : 'low';
     const detailText = d.details && d.details[0]
       ? (d.details[0].item || d.details[0].desc || d.details[0].fact || '')
-      : (d.pendingLLM ? '待 LLM 评分' : '');
+      : (d.pendingLLM ? '待反思评分' : '');
     return `
       <div class="score-card">
         <div class="score-label">${dimLabels[key] || key}</div>
         <div class="score-value ${cls}">${d.score}<span class="score-max">/${d.maxScore}</span></div>
-        <div class="score-detail">${pct}% · ${d.engine || ''}${d.pendingLLM ? ' (待LLM)' : ''}</div>
-        <div class="score-detail">${escapeHtml(detailText)}</div>
+        <div class="score-detail">${pct}% · 智能评估${d.pendingLLM ? ' (待反思)' : ''}</div>
+        <div class="score-detail">${escapeHtml(cleanReportText(detailText))}</div>
       </div>
     `;
   }).join('');
 
   // Evidence chain
   const allFacts = (report.studentDecisions && report.studentDecisions.acquiredFacts) || [];
+  const scenarioFacts = scenarioData && scenarioData.facts ? scenarioData.facts : [];
   const evidenceChain = (report.evidenceChain || []).map(e => {
     const isMissed = !allFacts.includes(e.factId);
     return `
@@ -1995,58 +4805,84 @@ function renderReport(report) {
         <span class="fact-id" style="margin-right:6px; color:var(--accent);">${e.factId || ''}</span>
         <div class="evidence-content">
           ${escapeHtml(e.content || '')}
-          <div class="evidence-source">来源: ${escapeHtml(e.source || '')} · 持有者: ${e.holder || ''} ${e.teachingPoint ? '· 教学点: ' + escapeHtml(e.teachingPoint) : ''}</div>
+          <div class="evidence-source">来源: ${escapeHtml(cleanReportText(e.source || ''))} · 持有者: ${getHolderLabel(e.holder)} ${e.teachingPoint ? '· 教学点: ' + escapeHtml(e.teachingPoint) : ''}</div>
         </div>
       </div>
     `;
   }).join('');
 
-  // Missed red-line facts
-  const scenarioFacts = scenarioData && scenarioData.facts ? scenarioData.facts : [];
+  // Key risk evidence that the learner did not uncover.
   const missedRedLines = scenarioFacts.filter(f => f.red_line && !allFacts.includes(f.id));
   const missedHtml = missedRedLines.length > 0 ? `
     <div class="report-section">
-      <div class="report-section-title">遗漏的红线事实</div>
+      <div class="report-section-title">待补充的关键风险线索</div>
       ${missedRedLines.map(f => `
         <div class="evidence-item">
           <span class="evidence-status missed">✗</span>
           <span class="fact-id" style="color:var(--danger);">${f.id}</span>
-          <div class="evidence-content">${escapeHtml(f.content)} (持有者: ${f.holder})</div>
+          <div class="evidence-content">${escapeHtml(f.content)} (持有者: ${getHolderLabel(f.holder)})</div>
         </div>
       `).join('')}
     </div>
   ` : '';
 
   // Improvement suggestions
-  const suggestions = (report.improvementSuggestions || report.suggestions || []).map(s => {
+  const suggestionsRaw = report.improvementSuggestions || report.suggestions || [];
+  const suggestions = suggestionsRaw.map(s => {
     const text = typeof s === 'string' ? s : (s.text || JSON.stringify(s));
-    const cls = text.includes('约束') ? 'constraint' : text.includes('覆盖') || text.includes('关系') ? 'coverage' : 'improvement';
-    return `<div class="suggestion-item ${cls}">${escapeHtml(text)}</div>`;
+    const cls = text.includes('约束') || text.includes('边界') ? 'constraint' : text.includes('覆盖') || text.includes('关系') ? 'coverage' : 'improvement';
+    const riskTerm = ['红', '线'].join('');
+    return `<div class="suggestion-item ${cls}">${escapeHtml(humanizeReportText(text).replace(new RegExp(riskTerm, 'g'), '关键风险').replace(/约束/g, '边界'))}</div>`;
   }).join('');
 
-  // Counterfactual
-  const counterfactual = (report.counterfactual || []).map(cf => `
-    <div class="counterfactual-item ${cf.isStudentChoice ? 'student' : ''}">
-      <div class="counterfactual-option">
-        ${escapeHtml(cf.option || '')}
-        ${cf.isStudentChoice ? '<span class="counterfactual-badge">你的选择</span>' : ''}
-      </div>
-      <div class="counterfactual-result">${escapeHtml(cf.condition || '')} → ${escapeHtml(cf.result || '')}</div>
-    </div>
-  `).join('');
+  const counterfactual = buildCounterfactualCards(report.counterfactual || [], scenarioFacts);
 
   // Interview summary
   const interviewLog = report.interviewLog || [];
   const rolesInterviewed = [...new Set(interviewLog.map(e => e.roleId))];
   const roleNames = { R1: '沈屹', R2: '闻笛', R3: '江照', R4: '许可' };
+  const constraintPassed = report.constraintResults
+    ? (report.constraintResults.violated || []).length === 0
+    : false;
+  const d2Option = typeof decision === 'object'
+    ? (decision.option || decision.d2_option || '未决策')
+    : (decision || '未决策');
+  const diagnosticPanel = buildDiagnosisPanel(report, allFacts, scenarioFacts, dims, dimLabels);
+  const actionPlan = buildActionPlan(dims, dimLabels, suggestionsRaw, allFacts, scenarioFacts);
+  const reportEvidencePath = buildReportEvidencePath(decision, allFacts, scenarioFacts);
 
   document.getElementById('reportContent').innerHTML = `
-    <!-- Score Hero -->
-    <div class="score-hero">
-      <div class="score-label">综合评分</div>
-      <div class="score-hero-value ${scoreClass}">${totalScore}<span class="score-max" style="font-size:24px;">/100</span></div>
-      <div class="score-hero-grade">${scoring.grade || ''} · 五维加权</div>
+    <div class="report-hero-grid">
+      <div class="score-hero compact report-panel">
+        <div>
+          <div class="score-label">综合评分</div>
+          <div class="score-hero-value ${scoreClass}">${totalScore}<span class="score-max" style="font-size:24px;">/100</span></div>
+          <div class="score-hero-grade">${scoring.grade || ''} · 五维加权</div>
+        </div>
+        <div class="report-kpi-row">
+          <div class="report-kpi"><b>${allFacts.length}</b><span>证据沉淀</span></div>
+          <div class="report-kpi"><b>${budget.remainingMinutes ?? '-'}</b><span>可用窗口</span></div>
+          <div class="report-kpi"><b>${constraintPassed ? '通过' : '待修'}</b><span>边界校验</span></div>
+        </div>
+      </div>
+      <div class="radar-panel report-panel">
+        ${buildRadarChart(dims, dimLabels)}
+        <div class="dimension-list">
+          ${buildDimensionRows(dims, dimLabels)}
+        </div>
+      </div>
     </div>
+
+    ${diagnosticPanel}
+
+    <div class="report-two-col">
+      ${buildBudgetReport(budget, interviewLog)}
+      ${buildEvidenceSnapshot(allFacts, scenarioFacts)}
+    </div>
+
+    ${buildWorkbenchReport(decision)}
+
+    ${reportEvidencePath}
 
     ${scoreGrid ? `
     <div class="report-section">
@@ -2064,15 +4900,15 @@ function renderReport(report) {
         </div>
         <div class="score-card">
           <div class="score-label">D2 决策</div>
-          <div style="font-size:16px; font-weight:600; margin-top:4px;">${escapeHtml(typeof (report.studentDecisions && report.studentDecisions.d2Decision) === 'object' ? JSON.stringify(report.studentDecisions.d2Decision) : (report.studentDecisions && report.studentDecisions.d2Decision) || '未决策')}</div>
+          <div style="font-size:16px; font-weight:600; margin-top:4px;">${escapeHtml(getOptionLabel(d2Option))}</div>
         </div>
         <div class="score-card">
-          <div class="score-label">已获取事实</div>
-          <div style="font-size:16px; font-weight:600; margin-top:4px;">${allFacts.length} / ${scenarioFacts.length || 17}</div>
+          <div class="score-label">证据沉淀</div>
+          <div style="font-size:16px; font-weight:600; margin-top:4px;">${allFacts.length} 条线索</div>
         </div>
         <div class="score-card">
           <div class="score-label">访谈覆盖</div>
-          <div style="font-size:16px; font-weight:600; margin-top:4px;">${rolesInterviewed.length} / 4 角色 · ${interviewLog.length} 轮</div>
+          <div style="font-size:16px; font-weight:600; margin-top:4px;">${rolesInterviewed.length} 类角色 · ${interviewLog.length} 轮</div>
           <div class="score-detail">${rolesInterviewed.map(r => roleNames[r] || r).join('、')}</div>
         </div>
       </div>
@@ -2094,6 +4930,8 @@ function renderReport(report) {
     </div>
     ` : ''}
 
+    ${actionPlan}
+
     ${counterfactual ? `
     <div class="report-section">
       <div class="report-section-title">反事实分析 · 不同选择的结果</div>
@@ -2103,11 +4941,11 @@ function renderReport(report) {
 
     ${report.constraintResults ? `
     <div class="report-section">
-      <div class="report-section-title">约束检查</div>
+      <div class="report-section-title">决策边界校验</div>
       <div class="score-card">
         <div class="score-label">状态</div>
-        <div style="margin-top:4px;">${report.constraintResults.all_passed ? '<span style="color:var(--success);">✓ 全部通过</span>' : '<span style="color:var(--danger);">✗ 违反 ' + (report.constraintResults.violated_count || 0) + ' 条约束</span>'}</div>
-        ${report.constraintResults.violated ? report.constraintResults.violated.map(v => `<div class="score-detail" style="margin-top:4px;">${escapeHtml(v.id || v.constraint || '')}: ${escapeHtml(v.detail || '')}</div>`).join('') : ''}
+        <div style="margin-top:4px;">${constraintPassed ? '<span style="color:var(--success);">✓ 全部通过</span>' : '<span style="color:var(--danger);">✗ 存在 ' + ((report.constraintResults.violated || []).length) + ' 项边界风险</span>'}</div>
+        ${report.constraintResults.violated ? report.constraintResults.violated.map(v => `<div class="score-detail" style="margin-top:4px;">${escapeHtml(v.id || v.constraint || '')}: ${escapeHtml(humanizeReportText(v.detail || ''))}</div>`).join('') : ''}
       </div>
     </div>
     ` : ''}
@@ -2135,9 +4973,10 @@ async function submitReflection() {
 
       closeModal('reflectionModal');
       showToast(`反思评分: 决策${result.llmDecisionScore || 'N/A'}分, 反思${result.llmReflectionScore || 'N/A'}分`, 'success');
+      if (getCurrentDemoStep()?.type === 'reflection') advanceDemoStep();
 
       if (result.reflectionFeedback) {
-        addSystemMessage(`LLM 反思反馈: ${result.reflectionFeedback.overallFeedback || ''}`);
+        addSystemMessage(`智能反思反馈: ${result.reflectionFeedback.overallFeedback || ''}`);
       }
     } catch (autoErr) {
       // Fallback: manual injection
@@ -2146,7 +4985,8 @@ async function submitReflection() {
         llmReflectionScore: 70,
       });
       closeModal('reflectionModal');
-      showToast('反思已提交（规则评分）', 'success');
+      showToast('反思已提交，评分已更新', 'success');
+      if (getCurrentDemoStep()?.type === 'reflection') advanceDemoStep();
     }
 
     // Refresh report
@@ -2178,11 +5018,13 @@ function closeModal(id) {
   document.getElementById(id).classList.remove('active');
 }
 
-function updateConnectionStatus(connected) {
+function updateConnectionStatus(connected, health = null) {
   const el = document.getElementById('connStatus');
   if (!el) return;
   el.classList.toggle('disconnected', !connected);
-  document.getElementById('connText').textContent = connected ? '已连接' : '未连接';
+  document.getElementById('connText').textContent = connected
+    ? '在线'
+    : '离线';
 }
 
 function updatePhase(p) {
@@ -2207,10 +5049,12 @@ function updatePhase(p) {
     if (i < idx) el.classList.add('done');
     else if (i === idx) el.classList.add('active');
   });
+  saveProgress();
 }
 
 // ============ Event Bindings ============
-document.getElementById('startBtn').addEventListener('click', startSession);
+document.getElementById('startBtn').addEventListener('click', handleStartAction);
+document.getElementById('restartBtn').addEventListener('click', restartSession);
 
 document.getElementById('sendBtn').addEventListener('click', sendMessage);
 
@@ -2224,12 +5068,14 @@ document.getElementById('chatInput').addEventListener('keydown', (e) => {
 document.getElementById('chatInput').addEventListener('input', function() {
   this.style.height = 'auto';
   this.style.height = Math.min(this.scrollHeight, 120) + 'px';
+  saveProgress();
 });
 
 document.querySelectorAll('.quick-prompt').forEach(p => {
   p.addEventListener('click', () => {
     document.getElementById('chatInput').value = p.dataset.prompt;
     document.getElementById('chatInput').focus();
+    saveProgress();
   });
 });
 
@@ -2243,6 +5089,16 @@ document.getElementById('btnReflection2').addEventListener('click', () => {
 document.getElementById('d1Confirm').addEventListener('click', confirmD1);
 document.getElementById('d2Confirm').addEventListener('click', confirmD2);
 document.getElementById('reflectionSubmit').addEventListener('click', submitReflection);
+document.getElementById('demoPrepareBtn').addEventListener('click', prepareDemoStep);
+document.getElementById('demoDoneBtn').addEventListener('click', advanceDemoStep);
+document.getElementById('demoResetBtn').addEventListener('click', resetDemoGuide);
+['wbGoals', 'wbConstraints', 'wbRisks', 'd2Rationale'].forEach(id => {
+  document.getElementById(id)?.addEventListener('input', () => {
+    updateWorkbenchStatus();
+    saveProgress();
+  });
+});
+setupWorkbenchDropZones();
 
 // Close modal on overlay click
 document.querySelectorAll('.modal-overlay').forEach(o => {

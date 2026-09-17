@@ -60,9 +60,11 @@ const ROLE_PROMPT_BUILDERS = {
 const app = express();
 
 // ============ LLM 客户端初始化 ============
-const llmClient = createLLMClient();
-const llmEnabled = !!llmClient;
-console.log(`[LLM] LLM 适配器: ${llmEnabled ? '已启用' : '未启用（使用关键词兜底）'}`);
+// 当前赛版要求 Mock 写死：规则引擎是唯一执行路径，禁止真实 LLM 网络调用。
+const RULE_ENGINE_ONLY = true;
+const llmClient = RULE_ENGINE_ONLY ? null : createLLMClient();
+const llmEnabled = false;
+console.log('[LLM] 赛版规则引擎模式：真实 LLM 调用已关闭');
 
 // ============ LLM 角色回复器 ============
 
@@ -329,7 +331,8 @@ app.get('/api/health', (req, res) => {
     uptime: process.uptime(),
     sessionCount: sessionStore.size,
     llmEnabled,
-    llmModel: llmEnabled ? llmClient.config.model : null,
+    llmModel: null,
+    ruleEngineOnly: RULE_ENGINE_ONLY,
     timestamp: new Date().toISOString(),
   }, '服务正常运行');
 });
@@ -405,10 +408,12 @@ app.post('/api/sessions', (req, res) => {
       scenarioName: initResult.scenarioName,
       version: initResult.version,
       timeline: initResult.timeline,
+      budget: initResult.budget,
       roles: initResult.roles,
       initialFacts: initResult.initialFacts,
       intentClassifierMode: engine.intentClassifierMode,
       llmEnabled,
+      ruleEngineOnly: RULE_ENGINE_ONLY,
     }, '会话已创建');
   } catch (err) {
     errorResponse(res, 500, '创建会话失败', err.message);
@@ -490,6 +495,9 @@ app.post('/api/sessions/:sessionId/messages', async (req, res) => {
     }
     if (!message || typeof message !== 'string') {
       return errorResponse(res, 400, '缺少必填参数: message');
+    }
+    if (!ROLE_PROMPT_BUILDERS[roleId]) {
+      return errorResponse(res, 400, `无效角色: ${roleId}`);
     }
 
     // 意图分类：preclassifiedIntent > LLM > 关键词兜底

@@ -68,6 +68,8 @@ test('GET /api/health - 健康检查', async () => {
   assert.strictEqual(res.status, 200);
   assert.strictEqual(res.body.status, 'success');
   assert.strictEqual(res.body.data.status, 'running');
+  assert.strictEqual(res.body.data.llmEnabled, false);
+  assert.strictEqual(res.body.data.ruleEngineOnly, true);
   assert.ok(res.body.data.uptime >= 0);
 });
 
@@ -95,6 +97,8 @@ test('POST /api/sessions - 创建会话', async () => {
   assert.strictEqual(res.body.data.scenarioId, 'LN2-v01');
   assert.ok(res.body.data.roles.length >= 4);
   assert.ok(res.body.data.initialFacts.length > 0);
+  assert.strictEqual(res.body.data.llmEnabled, false);
+  assert.ok(res.body.data.budget.totalMinutes > 0);
   sessionId = res.body.data.sessionId;
 });
 
@@ -106,6 +110,7 @@ test('GET /api/sessions/:sessionId - 获取状态', async () => {
   assert.ok(res.body.data.acquiredFacts.length > 0);
   assert.strictEqual(res.body.data.d1Choice, null);
   assert.strictEqual(res.body.data.d2Decision, null);
+  assert.ok(res.body.data.budget.remainingMinutes <= res.body.data.budget.totalMinutes);
 });
 
 test('GET /api/sessions/invalid - 无效会话返回 404', async () => {
@@ -126,6 +131,7 @@ test('POST /api/sessions/:sessionId/messages - 访谈 R2（QA）', async () => {
   assert.ok(res.body.data.actionType);
   assert.ok(res.body.data.response);
   assert.ok(res.body.data.acquiredFactsCount > 0);
+  assert.ok(res.body.data.budget.remainingMinutes < res.body.data.budget.totalMinutes);
 });
 
 test('POST /api/sessions/:sessionId/messages - 访谈 R1（Tech）', async () => {
@@ -144,6 +150,16 @@ test('POST /api/sessions/:sessionId/messages - 缺少 roleId 报 400', async () 
   });
   assert.strictEqual(res.status, 400);
   assert.strictEqual(res.body.status, 'error');
+});
+
+test('POST /api/sessions/:sessionId/messages - 无效 roleId 报 400', async () => {
+  const res = await request('POST', `/api/sessions/${sessionId}/messages`, {
+    roleId: 'r_tech_lead',
+    message: 'test',
+  });
+  assert.strictEqual(res.status, 400);
+  assert.strictEqual(res.body.status, 'error');
+  assert.ok(res.body.message.includes('无效角色'));
 });
 
 test('POST /api/sessions/:sessionId/messages - 缺少 message 报 400', async () => {
@@ -176,9 +192,26 @@ test('POST /api/sessions/:sessionId/decisions/d1 - 缺少 choice 报 400', async
 
 // ---------- 核心交互：D2 决策 ----------
 
-test('POST /api/sessions/:sessionId/decisions/d2 - 提交 D2 (字符串形式)', async () => {
+test('POST /api/sessions/:sessionId/decisions/d2 - 字符串形式被工作台校验拒绝', async () => {
   const res = await request('POST', `/api/sessions/${sessionId}/decisions/d2`, {
     decision: 'Limited_20%',
+  });
+  assert.strictEqual(res.status, 400);
+  assert.strictEqual(res.body.status, 'error');
+});
+
+test('POST /api/sessions/:sessionId/decisions/d2 - 提交 D2 六要素工作台', async () => {
+  const res = await request('POST', `/api/sessions/${sessionId}/decisions/d2`, {
+    decision: {
+      option: 'Limited_20%',
+      facts: ['F-04', 'F-05', 'F-12'],
+      goals: ['按时上线活动，同时避免 QPS>2500 的缺陷触发'],
+      constraints: ['活动不可取消', '止血时间小于15分钟', '至少引用3条事实证据'],
+      risks: ['峰值预估存在偏差', '灰度后仍需监控回滚'],
+      evidence_refs: ['F-04', 'F-05', 'F-12'],
+      rationale: '灰度20%在阈值以下，回滚5分钟满足C-04',
+      contingency_plan: '监控哨兵+5分钟内切回老引擎',
+    },
   });
   assert.strictEqual(res.status, 200);
   assert.strictEqual(res.body.status, 'success');
@@ -306,9 +339,13 @@ test('完整流程：创建→访谈→D1→D2→报告', async () => {
     decision: {
       option: 'Limited_20%',
       limited_pct: 20,
+      facts: ['F-04', 'F-05', 'F-12'],
+      goals: ['按时上线并控制事故风险'],
+      constraints: ['活动不可取消', '止血时间小于15分钟', '引用至少3条事实'],
+      risks: ['峰值偏差', '灰度监控不到位'],
       evidence_refs: ['F-04', 'F-05', 'F-12'],
       rationale: '灰度20%在阈值以下，回滚5分钟满足C-04',
-      contingency_plan: '5分钟内切回老引擎',
+      contingency_plan: '监控哨兵+5分钟内切回老引擎',
     },
   });
   assert.ok(d2Res.body.data.constraintResults);
